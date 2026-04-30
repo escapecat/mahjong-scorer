@@ -7,12 +7,14 @@ import { ResultDisplay } from '../../components/ResultDisplay';
 import { WaitSuggestions } from '../../components/WaitSuggestions';
 import { TileKeyboard } from '../../components/TileKeyboard';
 import { BottomNav } from '../../components/BottomNav';
+import { DiscardSuggestion } from '../../components/DiscardSuggestion';
 import styles from './index.module.css';
 
 export default function Index() {
   const {
     state, dispatch, total, expected,
     currentResult, winSuggestions, addTileToTarget, isTileDisabled,
+    discardAnalysisInputs,
   } = useCalculator();
 
   // Build meld entries for HandDisplay
@@ -81,6 +83,14 @@ export default function Index() {
           onExpand={(code) => dispatch({ type: 'EXPAND_WAIT', code })}
           onAddTile={(t) => dispatch({ type: 'ADD_WINNING_TILE', tile: t })}
         />
+
+        {discardAnalysisInputs && (
+          <DiscardSuggestion
+            allCounts={discardAnalysisInputs.allCounts}
+            lockedMelds={discardAnalysisInputs.melds}
+            game={discardAnalysisInputs.game}
+          />
+        )}
       </View>
 
       <TileKeyboard

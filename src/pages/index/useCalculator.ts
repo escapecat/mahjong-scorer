@@ -346,6 +346,29 @@ export function useCalculator() {
     return results;
   }, [state]);
 
+  // ── Discard analysis inputs (when at 14 tiles) ──
+  const discardAnalysisInputs = useMemo(() => {
+    if (total !== expected || effective !== 14) return null;
+    const allCounts = buildAllCounts(state);
+    const melds = buildLockedMelds(state);
+    const game = createGameContext({
+      isSelfDraw: state.isSelfDraw,
+      winningTile: state.winningTile ?? undefined,
+      seatWind: state.seatWind,
+      roundWind: state.roundWind,
+      flowerCount: state.flowerCount,
+      isLastTile: state.isLastTile,
+      isKongDraw: state.isKongDraw,
+      isRobbingKong: state.isRobbingKong,
+      isWinningTileLast: state.isWinningTileLast,
+      chiCount: state.chiMelds.length,
+      pengCount: state.pengMelds.length,
+      mingKongCount: state.mingKongMelds.length,
+      anKongCount: state.anKongMelds.length,
+    });
+    return { allCounts, melds, game };
+  }, [state]);
+
   // ── Dispatch helpers ──
   const addTileToTarget = useCallback((t: Tile) => {
     switch (state.addTarget) {
@@ -367,6 +390,7 @@ export function useCalculator() {
     total,
     expected,
     isAtLimit,
+    discardAnalysisInputs,
     currentResult,
     winSuggestions,
     addTileToTarget,

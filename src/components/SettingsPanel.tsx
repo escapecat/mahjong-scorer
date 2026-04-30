@@ -45,7 +45,7 @@ export function SettingsPanel(props: Props) {
         <Text className={styles.flowerVal}>{props.flowerCount}</Text>
         <Chip active={false} label='＋' onClick={() => props.onSetFlower(props.flowerCount + 1)} />
       </View>
-      <View className={styles.row}>
+      <View className={`${styles.row} ${styles.windRow}`}>
         <Text className={styles.label}>门风</Text>
         {WINDS.map((w, i) => (
           <Chip key={`seat-${i}`} active={tileEquals(props.seatWind, w)} label={WIND_LABELS[i]} onClick={() => props.onSetSeatWind(w)} />

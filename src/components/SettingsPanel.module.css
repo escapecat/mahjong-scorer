@@ -15,6 +15,22 @@
   gap: 6px;
   align-items: center;
 }
+/* Wind row has 11 items (2 labels + 8 wind chips + separator); pack tighter
+ * so 320–390px-wide phones don't wrap it onto two lines. */
+.windRow {
+  gap: 4px;
+}
+.windRow .chip {
+  padding: 4px 7px;
+  min-width: 0;
+  box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
+}
+.windRow .label {
+  margin-right: 0;
+}
+.windRow .sep {
+  margin: 0;
+}
 .label {
   font-size: 11px;
   color: #64748b;

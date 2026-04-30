@@ -185,16 +185,21 @@ export const sequencePatternFans: FanRule[] = [
     description: '两种花色各有一副序数相同的顺子',
     excludes: [],
     match: (ctx) => {
+      // Per 国标, 喜相逢 is awarded once per rank that has same sequence in
+      // exactly 2 different suits. Hand with 123m+123p (rank 0) AND 456m+456s
+      // (rank 3) earns 喜相逢 ×2.
+      // Same-suit pair (一般高) and three-suit match (三色三同顺) take priority,
+      // so this rule yields 0 if either of those conditions holds.
       const bs = seqBySuit(ctx);
-      // Only award if no same-suit pair (一般高) and no three-suit match
       const sameInfo = maxSameSequenceInfo(bs);
-      if (sameInfo.count >= 2) return 0;
+      if (sameInfo.count >= 2) return 0; // 一般高/一色三/四同顺 has priority
+      let count = 0;
       for (let rank = 0; rank < 7; rank++) {
         const suitCount = NUMBER_SUIT_LIST.filter(s => bs.get(s)!.includes(rank)).length;
-        if (suitCount >= 3) return 0; // three-suit same seq takes priority
-        if (suitCount >= 2) return 1;
+        if (suitCount >= 3) return 0; // three-suit takes priority over the whole hand
+        if (suitCount === 2) count++;
       }
-      return 0;
+      return count;
     },
   },
   {

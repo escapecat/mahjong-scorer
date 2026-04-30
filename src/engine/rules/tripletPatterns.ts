@@ -92,8 +92,12 @@ export const tripletPatternFans: FanRule[] = [
     description: '2副序数相同的刻子',
     excludes: [],
     match: (ctx) => {
+      // Per 国标, 双同刻 is awarded once per rank that has exactly 2 same-rank
+      // triplets across different suits. So a hand with 222m/222p plus 333m/333p
+      // earns 双同刻 ×2 = 4 fan, not 1×2 = 2 fan. (三同刻 — 3 suits matching at one
+      // rank — supersedes via the SanTongKe excludes list.)
       const counts = sameNumberTripletCounts(ctx);
-      return counts.some(c => c >= 3) ? 0 : counts.some(c => c >= 2) ? 1 : 0;
+      return counts.filter(c => c === 2).length;
     },
   },
 ];

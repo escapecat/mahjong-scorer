@@ -1,17 +1,23 @@
 .app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  padding-bottom: 112rpx;
-  max-width: 1120rpx;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 560px;
   margin: 0 auto;
   background: transparent;
+  overflow: hidden;
 }
 .display {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: 6rpx;
   padding: 4rpx 12rpx;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+}
+.display::-webkit-scrollbar {
+  display: none;
 }

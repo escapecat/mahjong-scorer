@@ -1,19 +1,13 @@
 .nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 112rpx;
+  flex-shrink: 0;
+  height: 96rpx;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(36rpx);
   border-top: 2rpx solid rgba(255, 255, 255, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
   box-shadow: 0 -16rpx 40rpx rgba(15, 23, 42, 0.06);
-  max-width: 1120rpx;
-  margin: 0 auto;
 }
 .tab {
   flex: 1;
@@ -21,17 +15,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16rpx 12rpx;
+  padding: 8rpx 12rpx;
   color: #64748b;
 }
 .active {
   color: #2563eb;
 }
 .icon {
-  font-size: 44rpx;
-  margin-bottom: 4rpx;
+  font-size: 36rpx;
+  margin-bottom: 2rpx;
 }
 .label {
-  font-size: 22rpx;
+  font-size: 20rpx;
   font-weight: 600;
 }

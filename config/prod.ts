@@ -1,7 +1,13 @@
+// Read publicPath from env var so the same build can target either:
+// - Root deploy (Netlify):  TARO_PUBLIC_PATH=/  (default)
+// - Subpath (GitHub Pages): TARO_PUBLIC_PATH=/mahjong-scorer/
+const PUBLIC_PATH = process.env.TARO_PUBLIC_PATH || '/';
+const BASE_URL = PUBLIC_PATH.replace(/\/$/, ''); // strip trailing slash for tile paths
+
 export default {
   mini: {},
   h5: {
-    publicPath: '/mahjong-scorer/',
+    publicPath: PUBLIC_PATH,
     staticDirectory: 'static',
     enableExtract: true,
     miniCssExtractPluginOption: {
@@ -10,6 +16,6 @@ export default {
     },
   },
   defineConstants: {
-    'process.env.TARO_APP_BASE_URL': '"/mahjong-scorer"',
+    'process.env.TARO_APP_BASE_URL': JSON.stringify(BASE_URL),
   },
 };

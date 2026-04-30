@@ -8,13 +8,14 @@ import { WaitSuggestions } from '../../components/WaitSuggestions';
 import { TileKeyboard } from '../../components/TileKeyboard';
 import { BottomNav } from '../../components/BottomNav';
 import { DiscardSuggestion } from '../../components/DiscardSuggestion';
+import { FanPotential } from '../../components/FanPotential';
 import styles from './index.module.css';
 
 export default function Index() {
   const {
     state, dispatch, total, expected,
     currentResult, winSuggestions, addTileToTarget, isTileDisabled,
-    discardAnalysisInputs,
+    discardAnalysisInputs, fanPotentialInputs,
   } = useCalculator();
 
   // Build meld entries for HandDisplay
@@ -90,6 +91,10 @@ export default function Index() {
             lockedMelds={discardAnalysisInputs.melds}
             game={discardAnalysisInputs.game}
           />
+        )}
+
+        {fanPotentialInputs && (
+          <FanPotential allCounts={fanPotentialInputs.allCounts} />
         )}
       </View>
 

@@ -369,6 +369,13 @@ export function useCalculator() {
     return { allCounts, melds, game };
   }, [state]);
 
+  // ── Fan potential inputs (when at 13 or 14 tiles) ──
+  const fanPotentialInputs = useMemo(() => {
+    if (total < expected - 1 || effective < 13) return null;
+    const allCounts = buildAllCounts(state);
+    return { allCounts };
+  }, [state]);
+
   // ── Dispatch helpers ──
   const addTileToTarget = useCallback((t: Tile) => {
     switch (state.addTarget) {
@@ -391,6 +398,7 @@ export function useCalculator() {
     expected,
     isAtLimit,
     discardAnalysisInputs,
+    fanPotentialInputs,
     currentResult,
     winSuggestions,
     addTileToTarget,

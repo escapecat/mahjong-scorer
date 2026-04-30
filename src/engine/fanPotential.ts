@@ -1,5 +1,10 @@
 import { TileSet } from './models/tileSet';
-import type { Tile } from './models/tile';
+import { tileFromIndex, type Tile } from './models/tile';
+
+export interface MissingTile {
+  tile: Tile;
+  count: number;
+}
 
 export interface FanPotential {
   fanName: string;
@@ -8,17 +13,24 @@ export interface FanPotential {
   distance: number;
   /** Brief human-readable hint */
   description: string;
+  /** Specific tiles still needed (only populated for "targeted" fans) */
+  missingTiles?: MissingTile[];
 }
 
-/** Edit distance from current hand to a target tile distribution */
-function distanceTo(current: TileSet, target: number[]): number {
-  let dist = 0;
+/** Compute distance and the specific tiles still needed for a target distribution. */
+function computeDiff(current: TileSet, target: number[]): { distance: number; missing: MissingTile[] } {
+  const missing: MissingTile[] = [];
+  let distance = 0;
   for (let i = 0; i < 34; i++) {
     const have = current.getByIndex(i);
     const want = target[i];
-    if (want > have) dist += want - have;
+    if (want > have) {
+      const need = want - have;
+      distance += need;
+      missing.push({ tile: tileFromIndex(i), count: need });
+    }
   }
-  return dist;
+  return { distance, missing };
 }
 
 const SUIT_BASE = [0, 9, 18]; // man, pin, sou
@@ -29,24 +41,26 @@ const SUIT_NAMES = ['万', '筒', '条'];
 function computeDaSiXi(c: TileSet): FanPotential | null {
   // Target: 12 wind tiles (3 of each E,S,W,N) + 2 pair (any non-wind)
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (let pair = 0; pair < 34; pair++) {
     if (pair >= 27 && pair <= 30) continue; // pair can't be wind
     const t = new Array(34).fill(0);
     t[27] = 3; t[28] = 3; t[29] = 3; t[30] = 3;
     t[pair] = 2;
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '大四喜', points: 88, distance: best, description: '凑齐 4 副风刻 + 1 对' };
+  return { fanName: '大四喜', points: 88, distance: best, description: '凑齐 4 副风刻 + 1 对', missingTiles: bestMissing };
 }
 
 function computeDaSanYuan(c: TileSet): FanPotential | null {
   // Target: 9 dragon tiles (3 each of C,F,P) + 5 free tiles
   const t = new Array(34).fill(0);
   t[31] = 3; t[32] = 3; t[33] = 3;
-  const d = distanceTo(c, t);
-  if (d === 0 || d >= 14) return null;
-  return { fanName: '大三元', points: 88, distance: d, description: '凑齐 3 副箭刻（中发白）' };
+  const r = computeDiff(c, t);
+  if (r.distance === 0 || r.distance >= 14) return null;
+  return { fanName: '大三元', points: 88, distance: r.distance, description: '凑齐 3 副箭刻（中发白）', missingTiles: r.missing };
 }
 
 function computeLvYiSe(c: TileSet): FanPotential | null {
@@ -63,54 +77,56 @@ function computeLvYiSe(c: TileSet): FanPotential | null {
 function computeJiuLianBaoDeng(c: TileSet): FanPotential | null {
   // 1112345678999 in one suit + 1 extra in same suit
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
-    // Required: [3,1,1,1,1,1,1,1,3] in this suit
-    // Plus 1 extra of any rank in same suit (winning tile)
     for (let extra = 0; extra < 9; extra++) {
       const t = new Array(34).fill(0);
       const required = [3, 1, 1, 1, 1, 1, 1, 1, 3];
       for (let r = 0; r < 9; r++) t[base + r] = required[r];
       t[base + extra] += 1;
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '九莲宝灯', points: 88, distance: best, description: '凑齐 1112345678999 同花色' };
+  return { fanName: '九莲宝灯', points: 88, distance: best, description: '凑齐 1112345678999 同花色', missingTiles: bestMissing };
 }
 
 function computeLianQiDui(c: TileSet): FanPotential | null {
   // 7 consecutive pairs in one suit
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     for (let start = 0; start <= 2; start++) {
       const t = new Array(34).fill(0);
       for (let r = 0; r < 7; r++) t[base + start + r] = 2;
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '连七对', points: 88, distance: best, description: '凑齐同花色 7 个连续对子' };
+  return { fanName: '连七对', points: 88, distance: best, description: '凑齐同花色 7 个连续对子', missingTiles: bestMissing };
 }
 
 function computeShiSanYao(c: TileSet): FanPotential | null {
   // 13 orphans (1m,9m,1p,9p,1s,9s,E,S,W,N,C,F,P) + 1 extra orphan
   const orphans = [0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33];
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const extraOrphan of orphans) {
     const t = new Array(34).fill(0);
     for (const o of orphans) t[o] = 1;
     t[extraOrphan] = 2;
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '十三幺', points: 88, distance: best, description: '凑齐 13 种幺九 + 任 1 张幺九' };
+  return { fanName: '十三幺', points: 88, distance: best, description: '凑齐 13 种幺九 + 任 1 张幺九', missingTiles: bestMissing };
 }
 
 // ── 64番 ──
 
 function computeQingYaoJiu(c: TileSet): FanPotential | null {
-  // All 14 tiles are 1m/9m/1p/9p/1s/9s only (no honors!)
-  // Need triplets + pair structure. Just measure how many non-1/9 you have.
   let nonTerm = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { nonTerm += c.getByIndex(i); continue; }
@@ -124,26 +140,28 @@ function computeQingYaoJiu(c: TileSet): FanPotential | null {
 function computeXiaoSiXi(c: TileSet): FanPotential | null {
   // 3 wind triplets + 1 wind pair + 1 free meld (3 tiles)
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (let pairWind = 0; pairWind < 4; pairWind++) {
     const t = new Array(34).fill(0);
     for (let w = 0; w < 4; w++) t[27 + w] = w === pairWind ? 2 : 3;
-    // 3 free tiles for the last meld — distance accounts for them naturally
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '小四喜', points: 64, distance: best, description: '3 副风刻 + 1 副风对子' };
+  return { fanName: '小四喜', points: 64, distance: best, description: '3 副风刻 + 1 副风对子', missingTiles: bestMissing };
 }
 
 function computeXiaoSanYuan(c: TileSet): FanPotential | null {
-  // 2 dragon triplets + 1 dragon pair + 6 free tiles
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (let pairDragon = 0; pairDragon < 3; pairDragon++) {
     const t = new Array(34).fill(0);
     for (let d = 0; d < 3; d++) t[31 + d] = d === pairDragon ? 2 : 3;
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '小三元', points: 64, distance: best, description: '2 副箭刻 + 1 副箭对子' };
+  return { fanName: '小三元', points: 64, distance: best, description: '2 副箭刻 + 1 副箭对子', missingTiles: bestMissing };
 }
 
 function computeZiYiSe(c: TileSet): FanPotential | null {
@@ -154,17 +172,18 @@ function computeZiYiSe(c: TileSet): FanPotential | null {
 }
 
 function computeYiSeShuangLongHui(c: TileSet): FanPotential | null {
-  // Same suit: 123 + 789 + 123 + 789 + 55
-  // Target counts: [2,1,1,0,2,0,1,1,2] in one suit
+  // Same suit: 123 + 789 + 123 + 789 + 55  →  pattern [2,2,2,0,2,0,2,2,2] = 14 tiles
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     const t = new Array(34).fill(0);
-    const pattern = [2, 1, 1, 0, 2, 0, 1, 1, 2];
+    const pattern = [2, 2, 2, 0, 2, 0, 2, 2, 2];
     for (let r = 0; r < 9; r++) t[base + r] = pattern[r];
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色双龙会', points: 64, distance: best, description: '同花色 123×2 + 789×2 + 5对' };
+  return { fanName: '一色双龙会', points: 64, distance: best, description: '同花色 123×2 + 789×2 + 5对', missingTiles: bestMissing };
 }
 
 // ── 48番 ──
@@ -172,9 +191,9 @@ function computeYiSeShuangLongHui(c: TileSet): FanPotential | null {
 function computeYiSeSiTongShun(c: TileSet): FanPotential | null {
   // 4 same sequences in one suit + 2 pair (any other tile)
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     for (let seqStart = 0; seqStart <= 6; seqStart++) {
-      // 4 of each in 3 consecutive ranks = 12 tiles + 2 pair
       for (let pair = 0; pair < 34; pair++) {
         if (pair >= base && pair < base + 9 && pair >= base + seqStart && pair < base + seqStart + 3) continue;
         const t = new Array(34).fill(0);
@@ -182,17 +201,19 @@ function computeYiSeSiTongShun(c: TileSet): FanPotential | null {
         t[base + seqStart + 1] = 4;
         t[base + seqStart + 2] = 4;
         t[pair] = (t[pair] || 0) + 2;
-        best = Math.min(best, distanceTo(c, t));
+        const r = computeDiff(c, t);
+        if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
       }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色四同顺', points: 48, distance: best, description: '同花色 4 副相同顺子' };
+  return { fanName: '一色四同顺', points: 48, distance: best, description: '同花色 4 副相同顺子', missingTiles: bestMissing };
 }
 
 function computeYiSeSiJieGao(c: TileSet): FanPotential | null {
   // 4 consecutive triplets in one suit + pair
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     for (let start = 0; start <= 5; start++) {
       for (let pair = 0; pair < 34; pair++) {
@@ -200,18 +221,18 @@ function computeYiSeSiJieGao(c: TileSet): FanPotential | null {
         const t = new Array(34).fill(0);
         for (let k = 0; k < 4; k++) t[base + start + k] = 3;
         t[pair] = (t[pair] || 0) + 2;
-        best = Math.min(best, distanceTo(c, t));
+        const r = computeDiff(c, t);
+        if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
       }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色四节高', points: 48, distance: best, description: '同花色 4 副连续递增刻子' };
+  return { fanName: '一色四节高', points: 48, distance: best, description: '同花色 4 副连续递增刻子', missingTiles: bestMissing };
 }
 
 // ── 32番 ──
 
 function computeHunYaoJiu(c: TileSet): FanPotential | null {
-  // All terminal/honor + at least 1 honor (else it's 清幺九)
   let nonYaoJiu = 0;
   for (let i = 0; i < 27; i++) {
     const r = i % 9;
@@ -221,62 +242,100 @@ function computeHunYaoJiu(c: TileSet): FanPotential | null {
   for (let i = 27; i < 34; i++) honorCount += c.getByIndex(i);
 
   let dist = nonYaoJiu;
-  if (honorCount === 0) dist += 1; // need at least 1 honor
+  if (honorCount === 0) dist += 1;
 
   if (dist === 0 || dist >= 14) return null;
   return { fanName: '混幺九', points: 32, distance: dist, description: '只用 1/9/字 牌（含字牌）' };
 }
 
+function computeYiSeSiBuGao(c: TileSet): FanPotential | null {
+  // 4 stepped sequences in one suit (step 1 or 2)
+  let best = Infinity;
+  let bestMissing: MissingTile[] = [];
+  for (const base of SUIT_BASE) {
+    for (let start = 0; start <= 3; start++) {
+      const t = new Array(34).fill(0);
+      for (let s = start; s < start + 4; s++) {
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
+    }
+    {
+      const t = new Array(34).fill(0);
+      for (const s of [0, 2, 4, 6]) {
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
+    }
+  }
+  if (best === 0 || best >= 14) return null;
+  return { fanName: '一色四步高', points: 32, distance: best, description: '同花色 4 副阶梯顺子', missingTiles: bestMissing };
+}
+
 // ── 24番 ──
 
 function computeQiDui(c: TileSet): FanPotential | null {
-  // 7 distinct pairs (any tiles)
-  // Greedy: count of pairs in current hand
-  let pairCount = 0;
-  let oddCount = 0; // tiles with count 1 or 3
-  let totalSafePaired = 0; // contribution toward the 7 pairs (capped at 2 per type)
+  // 7 distinct pairs (any tiles). Only the top 7 tile types contribute —
+  // a hand with 11 different singletons doesn't get credit for all 11.
+  const contributions: { idx: number; v: number }[] = [];
   for (let i = 0; i < 34; i++) {
-    const ct = c.getByIndex(i);
-    if (ct >= 2) pairCount++;
-    totalSafePaired += Math.min(2, ct);
+    contributions.push({ idx: i, v: Math.min(2, c.getByIndex(i)) });
   }
-  // Distance = 14 - totalSafePaired (each "missing" pair tile = 1 swap)
-  const dist = 14 - totalSafePaired;
+  contributions.sort((a, b) => b.v - a.v);
+  const top7 = contributions.slice(0, 7);
+  const top7Sum = top7.reduce((s, x) => s + x.v, 0);
+  const dist = 14 - top7Sum;
   if (dist === 0 || dist >= 14) return null;
-  return { fanName: '七对', points: 24, distance: dist, description: '凑齐 7 个对子' };
+  // Missing: for each of top 7 with v < 2, we need (2 - v) more copies of THAT tile
+  const missing: MissingTile[] = [];
+  for (const x of top7) {
+    if (x.v < 2) missing.push({ tile: tileFromIndex(x.idx), count: 2 - x.v });
+  }
+  return { fanName: '七对', points: 24, distance: dist, description: '凑齐 7 个对子', missingTiles: missing };
 }
 
 function computeQiXingBuKao(c: TileSet): FanPotential | null {
-  // 7 honors (each 1) + 7 numbers from 147/258/369 (one suit per group)
-  // For each permutation of 3 number groups → 3 suits, compute target
+  // 14 = 7 distinct honors + 7 of 9 knitted positions (1+4+7 / 2+5+8 / 3+6+9 across 3 suits)
   const perms = [
     [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
   ];
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const p of perms) {
-    const t = new Array(34).fill(0);
-    // 7 honors
-    for (let i = 27; i < 34; i++) t[i] = 1;
-    // 147 in suit p[0], 258 in suit p[1], 369 in suit p[2]
-    for (const r of [0, 3, 6]) t[SUIT_BASE[p[0]] + r] = 1;
-    for (const r of [1, 4, 7]) t[SUIT_BASE[p[1]] + r] = 1;
-    for (const r of [2, 5, 8]) t[SUIT_BASE[p[2]] + r] = 1;
-    best = Math.min(best, distanceTo(c, t));
+    const knitted: number[] = [];
+    for (const r of [0, 3, 6]) knitted.push(SUIT_BASE[p[0]] + r);
+    for (const r of [1, 4, 7]) knitted.push(SUIT_BASE[p[1]] + r);
+    for (const r of [2, 5, 8]) knitted.push(SUIT_BASE[p[2]] + r);
+    // Pick 7 of the 9 knitted positions (drop 2)
+    for (let s1 = 0; s1 < 9; s1++) {
+      for (let s2 = s1 + 1; s2 < 9; s2++) {
+        const t = new Array(34).fill(0);
+        for (let i = 27; i < 34; i++) t[i] = 1;
+        for (let k = 0; k < 9; k++) {
+          if (k !== s1 && k !== s2) t[knitted[k]] = 1;
+        }
+        const r = computeDiff(c, t);
+        if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
+      }
+    }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '七星不靠', points: 24, distance: best, description: '7 字 + 三花色 147/258/369' };
+  return { fanName: '七星不靠', points: 24, distance: best, description: '7 字 + 三花色 147/258/369 中选 7 张', missingTiles: bestMissing };
 }
 
 function computeQuanShuangKe(c: TileSet): FanPotential | null {
-  // 4 even-rank triplets (ranks 1,3,5,7 = 2,4,6,8) + even-rank pair
-  // Pick 4 distinct (suit, rank) for triplets + 1 distinct for pair
-  // All from set: ranks 1,3,5,7 in any suit (12 options total)
   const evenRanks = [1, 3, 5, 7];
   const evenTiles: number[] = [];
   for (const base of SUIT_BASE) for (const r of evenRanks) evenTiles.push(base + r);
 
   let best = Infinity;
-  // For each combination of 4 tiles for triplets + 1 for pair
+  let bestMissing: MissingTile[] = [];
   for (let p = 0; p < evenTiles.length; p++) {
     for (let a = 0; a < evenTiles.length; a++) {
       if (a === p) continue;
@@ -292,14 +351,15 @@ function computeQuanShuangKe(c: TileSet): FanPotential | null {
             t[evenTiles[cc]] = 3;
             t[evenTiles[d]] = 3;
             t[evenTiles[p]] = 2;
-            best = Math.min(best, distanceTo(c, t));
+            const r = computeDiff(c, t);
+            if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
           }
         }
       }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '全双刻', points: 24, distance: best, description: '只用 2/4/6/8 组成 4 刻 + 1 对' };
+  return { fanName: '全双刻', points: 24, distance: best, description: '只用 2/4/6/8 组成 4 刻 + 1 对', missingTiles: bestMissing };
 }
 
 function computeQingYiSe(c: TileSet): FanPotential | null {
@@ -323,38 +383,38 @@ function computeQingYiSe(c: TileSet): FanPotential | null {
 }
 
 function computeYiSeSanTongShun(c: TileSet): FanPotential | null {
-  // 3 same sequences in one suit + 5 free tiles
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     for (let seqStart = 0; seqStart <= 6; seqStart++) {
       const t = new Array(34).fill(0);
       t[base + seqStart] = 3;
       t[base + seqStart + 1] = 3;
       t[base + seqStart + 2] = 3;
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色三同顺', points: 24, distance: best, description: '同花色 3 副相同顺子' };
+  return { fanName: '一色三同顺', points: 24, distance: best, description: '同花色 3 副相同顺子', missingTiles: bestMissing };
 }
 
 function computeYiSeSanJieGao(c: TileSet): FanPotential | null {
-  // 3 consecutive triplets in one suit + 5 free
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
     for (let start = 0; start <= 6; start++) {
       const t = new Array(34).fill(0);
       for (let k = 0; k < 3; k++) t[base + start + k] = 3;
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色三节高', points: 24, distance: best, description: '同花色 3 副连续递增刻子' };
+  return { fanName: '一色三节高', points: 24, distance: best, description: '同花色 3 副连续递增刻子', missingTiles: bestMissing };
 }
 
 function computeQuanDa(c: TileSet): FanPotential | null {
-  // All tiles in ranks 6-9 (789, since 全大 means 7,8,9 only — wait actually 全大=7,8,9 NOT 6,7,8,9)
-  // Re-check: 全大 = 由序数牌789组成 → ranks 6,7,8 (0-indexed)
   let nonBig = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { nonBig += c.getByIndex(i); continue; }
@@ -366,7 +426,6 @@ function computeQuanDa(c: TileSet): FanPotential | null {
 }
 
 function computeQuanZhong(c: TileSet): FanPotential | null {
-  // ranks 3,4,5 (0-indexed) → 4,5,6 displayed
   let nonMid = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { nonMid += c.getByIndex(i); continue; }
@@ -378,7 +437,6 @@ function computeQuanZhong(c: TileSet): FanPotential | null {
 }
 
 function computeQuanXiao(c: TileSet): FanPotential | null {
-  // ranks 0,1,2 → 1,2,3 displayed
   let nonSmall = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { nonSmall += c.getByIndex(i); continue; }
@@ -389,44 +447,12 @@ function computeQuanXiao(c: TileSet): FanPotential | null {
   return { fanName: '全小', points: 24, distance: nonSmall, description: `去掉 ${nonSmall} 张非 1/2/3 牌` };
 }
 
-// ── 32番 ──
-
-function computeYiSeSiBuGao(c: TileSet): FanPotential | null {
-  // 4 stepped sequences in one suit (step 1 or 2)
-  let best = Infinity;
-  for (const base of SUIT_BASE) {
-    // Step 1: starts 0..3
-    for (let start = 0; start <= 3; start++) {
-      const t = new Array(34).fill(0);
-      for (let s = start; s < start + 4; s++) {
-        t[base + s] += 1;
-        t[base + s + 1] += 1;
-        t[base + s + 2] += 1;
-      }
-      best = Math.min(best, distanceTo(c, t));
-    }
-    // Step 2: only start 0 fits
-    {
-      const t = new Array(34).fill(0);
-      for (const s of [0, 2, 4, 6]) {
-        t[base + s] += 1;
-        t[base + s + 1] += 1;
-        t[base + s + 2] += 1;
-      }
-      best = Math.min(best, distanceTo(c, t));
-    }
-  }
-  if (best === 0 || best >= 14) return null;
-  return { fanName: '一色四步高', points: 32, distance: best, description: '同花色 4 副阶梯顺子' };
-}
-
 // ── 16番 ──
 
 function computeYiSeSanBuGao(c: TileSet): FanPotential | null {
-  // 3 stepped sequences in one suit (step 1 or 2)
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const base of SUIT_BASE) {
-    // Step 1: starts 0..4
     for (let start = 0; start <= 4; start++) {
       const t = new Array(34).fill(0);
       for (let s = start; s < start + 3; s++) {
@@ -434,9 +460,9 @@ function computeYiSeSanBuGao(c: TileSet): FanPotential | null {
         t[base + s + 1] += 1;
         t[base + s + 2] += 1;
       }
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
-    // Step 2: starts 0..2
     for (let start = 0; start <= 2; start++) {
       const t = new Array(34).fill(0);
       for (const offset of [0, 2, 4]) {
@@ -445,15 +471,16 @@ function computeYiSeSanBuGao(c: TileSet): FanPotential | null {
         t[base + s + 1] += 1;
         t[base + s + 2] += 1;
       }
-      best = Math.min(best, distanceTo(c, t));
+      const r = computeDiff(c, t);
+      if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
     }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '一色三步高', points: 16, distance: best, description: '同花色 3 副阶梯顺子' };
+  return { fanName: '一色三步高', points: 16, distance: best, description: '同花色 3 副阶梯顺子', missingTiles: bestMissing };
 }
 
 function computeQuanDaiWu(c: TileSet): FanPotential | null {
-  // Approximation: all tiles in ranks 2-6 + at least 6 fives
+  // Heuristic: ranks 2-6 + at least 6 fives
   let bad = 0;
   let fives = 0;
   for (let i = 0; i < 34; i++) {
@@ -469,14 +496,14 @@ function computeQuanDaiWu(c: TileSet): FanPotential | null {
 }
 
 function computeQingLong(c: TileSet): FanPotential | null {
-  // 123 + 456 + 789 in one suit
   let best = Infinity;
   let bestSuit = -1;
+  let bestMissing: MissingTile[] = [];
   for (let s = 0; s < 3; s++) {
     const t = new Array(34).fill(0);
     for (let r = 0; r < 9; r++) t[SUIT_BASE[s] + r] = 1;
-    const d = distanceTo(c, t);
-    if (d < best) { best = d; bestSuit = s; }
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestSuit = s; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14 || bestSuit < 0) return null;
   return {
@@ -484,15 +511,16 @@ function computeQingLong(c: TileSet): FanPotential | null {
     points: 16,
     distance: best,
     description: `${SUIT_NAMES[bestSuit]} 1-9 各至少 1 张`,
+    missingTiles: bestMissing,
   };
 }
 
 function computeSanSeShuangLongHui(c: TileSet): FanPotential | null {
-  // 2 suits each with 123+789, third suit has 55 pair
   const perms = [
     [0, 1, 2], [0, 2, 1], [1, 2, 0],
   ];
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const [a, b, p] of perms) {
     const t = new Array(34).fill(0);
     for (const r of [0, 1, 2, 6, 7, 8]) {
@@ -500,50 +528,60 @@ function computeSanSeShuangLongHui(c: TileSet): FanPotential | null {
       t[SUIT_BASE[b] + r] = 1;
     }
     t[SUIT_BASE[p] + 4] = 2;
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '三色双龙会', points: 16, distance: best, description: '两花色 123+789 + 第三花色 5 对' };
+  return { fanName: '三色双龙会', points: 16, distance: best, description: '两花色 123+789 + 第三花色 5 对', missingTiles: bestMissing };
 }
 
 function computeSanTongKe(c: TileSet): FanPotential | null {
-  // 3 triplets of same rank across 3 suits + 5 free
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (let r = 0; r < 9; r++) {
     const t = new Array(34).fill(0);
-    t[r] = 3;            // man
-    t[9 + r] = 3;        // pin
-    t[18 + r] = 3;       // sou
-    best = Math.min(best, distanceTo(c, t));
+    t[r] = 3;
+    t[9 + r] = 3;
+    t[18 + r] = 3;
+    const res = computeDiff(c, t);
+    if (res.distance < best) { best = res.distance; bestMissing = res.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '三同刻', points: 16, distance: best, description: '万筒条同序数刻子各 1 副' };
+  return { fanName: '三同刻', points: 16, distance: best, description: '万筒条同序数刻子各 1 副', missingTiles: bestMissing };
 }
 
 // ── 12番 ──
 
 function computeQuanBuKao(c: TileSet): FanPotential | null {
-  // 5+ honors (each unique) + numbers from 147/258/369 (one suit per group)
-  // Distance = like 七星不靠 but accept 5-7 honors
-  // Simpler: same target as 七星不靠 minus 0-2 honors
+  // 14 distinct tiles chosen from {7 honors} ∪ {9 knitted in some perm} (drop 2 of 16)
   const perms = [
     [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
   ];
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const p of perms) {
-    const t = new Array(34).fill(0);
-    for (let i = 27; i < 34; i++) t[i] = 1;
-    for (const r of [0, 3, 6]) t[SUIT_BASE[p[0]] + r] = 1;
-    for (const r of [1, 4, 7]) t[SUIT_BASE[p[1]] + r] = 1;
-    for (const r of [2, 5, 8]) t[SUIT_BASE[p[2]] + r] = 1;
-    best = Math.min(best, distanceTo(c, t));
+    const candidates: number[] = [];
+    for (let i = 27; i < 34; i++) candidates.push(i);
+    for (const r of [0, 3, 6]) candidates.push(SUIT_BASE[p[0]] + r);
+    for (const r of [1, 4, 7]) candidates.push(SUIT_BASE[p[1]] + r);
+    for (const r of [2, 5, 8]) candidates.push(SUIT_BASE[p[2]] + r);
+    // Pick 14 of 16 (drop any 2)
+    for (let d1 = 0; d1 < 16; d1++) {
+      for (let d2 = d1 + 1; d2 < 16; d2++) {
+        const t = new Array(34).fill(0);
+        for (let k = 0; k < 16; k++) {
+          if (k !== d1 && k !== d2) t[candidates[k]] = 1;
+        }
+        const r = computeDiff(c, t);
+        if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
+      }
+    }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '全不靠', points: 12, distance: best, description: '5+ 字 + 三花色 147/258/369' };
+  return { fanName: '全不靠', points: 12, distance: best, description: '14 张分布于 7 字 + 三花色 147/258/369', missingTiles: bestMissing };
 }
 
 function computeDaYuWu(c: TileSet): FanPotential | null {
-  // ranks 5-8 (6789)
   let bad = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { bad += c.getByIndex(i); continue; }
@@ -568,26 +606,26 @@ function computeXiaoYuWu(c: TileSet): FanPotential | null {
 // ── 8番 ──
 
 function computeHuaLong(c: TileSet): FanPotential | null {
-  // 123 in suit a, 456 in suit b, 789 in suit c (3 suits)
   const perms = [
     [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
   ];
   let best = Infinity;
+  let bestMissing: MissingTile[] = [];
   for (const p of perms) {
     const t = new Array(34).fill(0);
     t[SUIT_BASE[p[0]] + 0] = 1; t[SUIT_BASE[p[0]] + 1] = 1; t[SUIT_BASE[p[0]] + 2] = 1;
     t[SUIT_BASE[p[1]] + 3] = 1; t[SUIT_BASE[p[1]] + 4] = 1; t[SUIT_BASE[p[1]] + 5] = 1;
     t[SUIT_BASE[p[2]] + 6] = 1; t[SUIT_BASE[p[2]] + 7] = 1; t[SUIT_BASE[p[2]] + 8] = 1;
-    best = Math.min(best, distanceTo(c, t));
+    const r = computeDiff(c, t);
+    if (r.distance < best) { best = r.distance; bestMissing = r.missing; }
   }
   if (best === 0 || best >= 14) return null;
-  return { fanName: '花龙', points: 8, distance: best, description: '三花色组成 1-9（123+456+789）' };
+  return { fanName: '花龙', points: 8, distance: best, description: '三花色组成 1-9（123+456+789）', missingTiles: bestMissing };
 }
 
 // ── 6番 ──
 
 function computeHunYiSe(c: TileSet): FanPotential | null {
-  // One suit + honors only
   let best = Infinity;
   let bestSuit = -1;
   for (let s = 0; s < 3; s++) {
@@ -610,7 +648,6 @@ function computeHunYiSe(c: TileSet): FanPotential | null {
 // ── 2番 ──
 
 function computeDuanYao(c: TileSet): FanPotential | null {
-  // No 1, 9, or honors
   let bad = 0;
   for (let i = 0; i < 34; i++) {
     if (i >= 27) { bad += c.getByIndex(i); continue; }
@@ -657,7 +694,6 @@ export function calculateFanPotential(allCounts: TileSet): FanPotential[] {
     if (r) results.push(r);
   }
 
-  // Sort by distance asc, then points desc
   results.sort((a, b) => {
     if (a.distance !== b.distance) return a.distance - b.distance;
     return b.points - a.points;

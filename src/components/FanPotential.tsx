@@ -4,7 +4,7 @@ import { TileSet } from '../engine/models/tileSet';
 import { tileFromIndex, type Tile } from '../engine/models/tile';
 import type { Meld } from '../engine/models/meld';
 import type { GameContext } from '../engine/models/types';
-import { calculateFanPotential, type FanPotential as FanPotentialItem } from '../engine/fanPotential';
+import { calculateFanPotential, type FanPotential as FanPotentialItem, type MissingTile } from '../engine/fanPotential';
 import { isWinningHandWithMelds } from '../engine/decomposer';
 import { evaluate } from '../engine/evaluator';
 import { analyzeDiscards } from '../engine/discardAnalyzer';
@@ -42,6 +42,13 @@ function tileNameShort(t: Tile): string {
   if (t.suit === 'dragon') return ['中', '发', '白'][t.rank];
   const suit = t.suit === 'man' ? '万' : t.suit === 'pin' ? '筒' : '条';
   return `${t.rank + 1}${suit}`;
+}
+
+function formatMissing(missing: MissingTile[]): string {
+  if (missing.length === 0) return '';
+  return missing
+    .map(m => m.count > 1 ? `${tileNameShort(m.tile)}×${m.count}` : tileNameShort(m.tile))
+    .join(' ');
 }
 
 export function FanPotential({ allCounts, lockedMelds, game, totalCount, expectedCount }: Props) {
@@ -141,6 +148,9 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
                 <View className={styles.info}>
                   <Text className={styles.fanName}>{p.fanName} <Text className={styles.fanPts}>{p.points}番</Text></Text>
                   <Text className={styles.fanDesc}>{p.description}</Text>
+                  {p.missingTiles && p.missingTiles.length > 0 && (
+                    <Text className={styles.missing}>缺: {formatMissing(p.missingTiles)}</Text>
+                  )}
                 </View>
                 <View className={styles.distance}>
                   <Text className={styles.distanceNum}>差 {p.distance}</Text>

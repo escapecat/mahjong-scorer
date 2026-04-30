@@ -373,8 +373,24 @@ export function useCalculator() {
   const fanPotentialInputs = useMemo(() => {
     if (total < expected - 1 || effective < 13) return null;
     const allCounts = buildAllCounts(state);
-    return { allCounts };
-  }, [state]);
+    const melds = buildLockedMelds(state);
+    const game = createGameContext({
+      isSelfDraw: state.isSelfDraw,
+      winningTile: state.winningTile ?? undefined,
+      seatWind: state.seatWind,
+      roundWind: state.roundWind,
+      flowerCount: state.flowerCount,
+      isLastTile: state.isLastTile,
+      isKongDraw: state.isKongDraw,
+      isRobbingKong: state.isRobbingKong,
+      isWinningTileLast: state.isWinningTileLast,
+      chiCount: state.chiMelds.length,
+      pengCount: state.pengMelds.length,
+      mingKongCount: state.mingKongMelds.length,
+      anKongCount: state.anKongMelds.length,
+    });
+    return { allCounts, melds, game, totalCount: total, expectedCount: expected };
+  }, [state, total, expected]);
 
   // ── Dispatch helpers ──
   const addTileToTarget = useCallback((t: Tile) => {

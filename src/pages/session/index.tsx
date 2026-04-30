@@ -216,17 +216,29 @@ export default function SessionPage() {
     Taro.showToast({ title: 'CSV 已复制,粘贴到表格软件即可', icon: 'none', duration: 2000 });
   }, [store]);
 
-  const backupSession = useCallback(() => {
-    if (!active) return;
-    const json = JSON.stringify(active);
-    Taro.setClipboardData({ data: json });
-    Taro.showToast({ title: '备份 JSON 已复制', icon: 'success', duration: 1500 });
-  }, [active]);
+  const backupAll = useCallback(() => {
+    if (store.sessions.length === 0) {
+      Taro.showToast({ title: '没有数据可备份', icon: 'none', duration: 1500 });
+      return;
+    }
+    const data = {
+      version: 1,
+      exportedAt: Date.now(),
+      activeSessionId: store.activeSessionId,
+      sessions: store.sessions,
+    };
+    Taro.setClipboardData({ data: JSON.stringify(data) });
+    Taro.showToast({
+      title: `已复制 ${store.sessions.length} 局备份`,
+      icon: 'success',
+      duration: 1800,
+    });
+  }, [store]);
 
-  const importSession = useCallback(async () => {
+  const restoreAll = useCallback(async () => {
     let text: string | null = null;
     if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
-      text = window.prompt('粘贴备份 JSON:');
+      text = window.prompt('粘贴备份 JSON 来恢复全部数据(会覆盖当前所有局):');
     } else {
       try {
         const r = await Taro.getClipboardData();
@@ -236,38 +248,41 @@ export default function SessionPage() {
     if (!text) return;
     try {
       const parsed = JSON.parse(text.trim());
-      if (
-        !parsed ||
-        typeof parsed !== 'object' ||
-        typeof parsed.id !== 'string' ||
-        !Array.isArray(parsed.players) ||
-        parsed.players.length !== 4 ||
-        !Array.isArray(parsed.rounds)
-      ) {
+      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.sessions)) {
         Taro.showToast({ title: '不是有效的备份 JSON', icon: 'none', duration: 1800 });
         return;
       }
-      // Re-id so it doesn't collide with an existing session
-      const imported: Session = {
-        id: `imp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
-        startTime: typeof parsed.startTime === 'number' ? parsed.startTime : Date.now(),
-        endTime: typeof parsed.endTime === 'number' ? parsed.endTime : undefined,
-        players: parsed.players,
-        rounds: parsed.rounds,
-        baseScore: typeof parsed.baseScore === 'number' ? parsed.baseScore : 8,
-      };
-      setStore((prev) => ({
-        // Make the imported session the active one so user immediately sees it
-        activeSessionId: imported.id,
-        sessions: [...prev.sessions.map((s) =>
-          s.id === prev.activeSessionId ? { ...s, endTime: s.endTime ?? Date.now() } : s
-        ), imported],
-      }));
-      Taro.showToast({ title: '已导入', icon: 'success', duration: 1200 });
+      // Validate each session minimally
+      const validSessions = parsed.sessions.filter((s: any) =>
+        s && typeof s.id === 'string' && Array.isArray(s.players) && s.players.length === 4 && Array.isArray(s.rounds)
+      ).map((s: any) => ({ ...s, baseScore: typeof s.baseScore === 'number' ? s.baseScore : 8 }));
+      if (validSessions.length === 0) {
+        Taro.showToast({ title: '备份里没有合法 session', icon: 'none', duration: 1800 });
+        return;
+      }
+      Taro.showModal({
+        title: `恢复 ${validSessions.length} 局?`,
+        content: `当前 ${store.sessions.length} 局会被覆盖。建议先点"备份"备一份。`,
+        confirmText: '覆盖',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            const validIds = new Set(validSessions.map((s: any) => s.id));
+            setStore({
+              activeSessionId:
+                typeof parsed.activeSessionId === 'string' && validIds.has(parsed.activeSessionId)
+                  ? parsed.activeSessionId
+                  : null,
+              sessions: validSessions,
+            });
+            Taro.showToast({ title: '已恢复', icon: 'success', duration: 1200 });
+          }
+        },
+      });
     } catch (e) {
       Taro.showToast({ title: 'JSON 解析失败', icon: 'none', duration: 1800 });
     }
-  }, []);
+  }, [store]);
 
   const todayTotal = useMemo(() => {
     const todayStart = new Date();
@@ -307,9 +322,11 @@ export default function SessionPage() {
             <View className={styles.startBtn} onClick={() => setShowSetup(true)}>
               <Text>🎲 新开一局</Text>
             </View>
-            <View className={styles.importBtn} onClick={importSession}>
-              <Text>📥 导入备份 JSON</Text>
-            </View>
+            {store.sessions.length === 0 && (
+              <View className={styles.importBtn} onClick={restoreAll}>
+                <Text>📥 从 JSON 恢复(换手机迁移)</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -393,9 +410,6 @@ export default function SessionPage() {
                     <View className={styles.copyBtn} onClick={copySession}>
                       <Text>📋 复制</Text>
                     </View>
-                    <View className={styles.copyBtn} onClick={backupSession}>
-                      <Text>💾 备份</Text>
-                    </View>
                     {process.env.TARO_ENV === 'h5' && (
                       <SessionShareButton session={active} />
                     )}
@@ -468,8 +482,16 @@ export default function SessionPage() {
                 </Text>
               </View>
             ))}
-            <View className={styles.csvBtn} onClick={exportAllCSV}>
-              <Text>📥 全部导出 CSV</Text>
+            <View className={styles.dataActions}>
+              <View className={styles.dataBtn} onClick={backupAll}>
+                <Text>📦 备份(JSON)</Text>
+              </View>
+              <View className={styles.dataBtn} onClick={restoreAll}>
+                <Text>📥 恢复</Text>
+              </View>
+              <View className={styles.dataBtn} onClick={exportAllCSV}>
+                <Text>📊 导出 CSV</Text>
+              </View>
             </View>
           </View>
         )}

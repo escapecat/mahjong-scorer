@@ -465,6 +465,21 @@
   font-size: 12px;
   font-weight: 600;
 }
+.dataActions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 4px;
+}
+.dataBtn {
+  text-align: center;
+  padding: 8px 4px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
 .archiveSection {
   background: rgba(255, 255, 255, 0.7);
   border-radius: 12px;

@@ -57,12 +57,12 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
   // Compute "current best achievable" — what's the max 番 you can get right now?
   const currentBest = useMemo<CurrentBest | null>(() => {
     if (!open) return null;
+    const safeMelds = lockedMelds ?? [];
     const isAt14 = totalCount === expectedCount;
     const isAt13 = totalCount === expectedCount - 1;
 
     if (isAt14) {
-      // For each discard, find the best winning tile + score
-      const discards = analyzeDiscards(allCounts, lockedMelds, game);
+      const discards = analyzeDiscards(allCounts, safeMelds, game);
       let best: CurrentBest | null = null;
       for (const d of discards) {
         for (const w of d.winningTiles) {
@@ -79,16 +79,15 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
       return best;
     }
     if (isAt13) {
-      // For each potential winning tile, evaluate
       let best: CurrentBest | null = null;
       const raw = [...allCounts.rawCounts()];
       for (let i = 0; i < 34; i++) {
         if (raw[i] >= 4) continue;
         raw[i]++;
         const test = TileSet.fromCounts(raw);
-        if (isWinningHandWithMelds(test, [...lockedMelds])) {
+        if (isWinningHandWithMelds(test, safeMelds)) {
           const winTile = tileFromIndex(i);
-          const result = evaluate(test, [...lockedMelds], { ...game, winningTile: winTile });
+          const result = evaluate(test, safeMelds, { ...game, winningTile: winTile });
           if (!best || result.totalFan > best.totalFan) {
             best = {
               totalFan: result.totalFan,

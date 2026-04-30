@@ -192,8 +192,9 @@ export function isWinningHandWithMelds(
 }
 
 /** Subtract locked meld tiles from counts (cap at 3 per meld for kongs) */
-export function subtractMelds(counts: TileSet, melds: readonly Meld[]): TileSet {
+export function subtractMelds(counts: TileSet, melds: readonly Meld[] | undefined | null): TileSet {
   const result = counts.clone();
+  if (!melds || melds.length === 0) return result;
   for (const meld of melds) {
     const { type, start } = meld;
     if (type === 'sequence') {

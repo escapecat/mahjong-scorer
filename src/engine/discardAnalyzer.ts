@@ -33,10 +33,11 @@ export interface DiscardOption {
  */
 export function analyzeDiscards(
   allCounts: TileSet,
-  lockedMelds: readonly Meld[],
+  lockedMelds: readonly Meld[] | undefined | null,
   game: GameContext,
 ): DiscardOption[] {
-  const handCounts = subtractMelds(allCounts, lockedMelds);
+  const safeMelds = lockedMelds ?? [];
+  const handCounts = subtractMelds(allCounts, safeMelds);
   const results: DiscardOption[] = [];
 
   for (let i = 0; i < 34; i++) {
@@ -53,12 +54,12 @@ export function analyzeDiscards(
 
       const test = afterAll.clone();
       test.add(tileFromIndex(j));
-      if (!isWinningHandWithMelds(test, [...lockedMelds])) continue;
+      if (!isWinningHandWithMelds(test, safeMelds)) continue;
 
       const winTile = tileFromIndex(j);
       const result: EvaluationResult = evaluate(
         test,
-        [...lockedMelds],
+        safeMelds,
         { ...game, winningTile: winTile },
       );
 

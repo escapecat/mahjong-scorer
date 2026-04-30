@@ -16,6 +16,8 @@ import {
   type Session,
   type SessionStore,
 } from './sessionStorage';
+import { aggregateByPlayer, sessionsToCSV, buildRunningTotals, type TimeRange } from './aggregation';
+import { TrendChart } from '../../components/TrendChart';
 import styles from './index.module.css';
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉', '🏅'];
@@ -48,6 +50,7 @@ export default function SessionPage() {
   const [setupBase, setSetupBase] = useState<number>(8);
   const [showEntry, setShowEntry] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
+  const [aggRange, setAggRange] = useState<TimeRange>('week');
 
   // persist on every store change
   useEffect(() => {
@@ -199,6 +202,19 @@ export default function SessionPage() {
     Taro.showToast({ title: '已复制', icon: 'success', duration: 1200 });
   }, [active, totals]);
 
+  const playerAgg = useMemo(() => aggregateByPlayer(store.sessions, aggRange), [store, aggRange]);
+  const runningPoints = useMemo(() => active ? buildRunningTotals(active) : [], [active]);
+
+  const exportAllCSV = useCallback(() => {
+    if (store.sessions.length === 0) {
+      Taro.showToast({ title: '没有数据', icon: 'none', duration: 1200 });
+      return;
+    }
+    const csv = sessionsToCSV(store.sessions);
+    Taro.setClipboardData({ data: csv });
+    Taro.showToast({ title: 'CSV 已复制,粘贴到表格软件即可', icon: 'none', duration: 2000 });
+  }, [store]);
+
   const todayTotal = useMemo(() => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -301,6 +317,13 @@ export default function SessionPage() {
             </View>
             <Text className={styles.baseHint}>底分: {active.baseScore} {active.baseScore === 8 ? '(国标)' : ''}</Text>
 
+            {active.rounds.length >= 1 && (
+              <View className={styles.chartSection}>
+                <Text className={styles.chartTitle}>📈 走势</Text>
+                <TrendChart points={runningPoints} players={active.players} />
+              </View>
+            )}
+
             <View className={styles.addBtn} onClick={() => { setEditingRound(null); setShowEntry(true); }}>
               <Text>➕ 录入这一把</Text>
             </View>
@@ -350,6 +373,40 @@ export default function SessionPage() {
               })}
             </View>
           </>
+        )}
+
+        {store.sessions.length > 0 && playerAgg.length > 0 && (
+          <View className={styles.aggregateSection}>
+            <View className={styles.aggregateHeader}>
+              <Text className={styles.archiveTitle}>📊 玩家累计</Text>
+              <View className={styles.rangeRow}>
+                {(['today', 'week', 'month', 'all'] as const).map((r) => (
+                  <View
+                    key={r}
+                    className={`${styles.rangeChip} ${aggRange === r ? styles.rangeChipActive : ''}`}
+                    onClick={() => setAggRange(r)}
+                  >
+                    <Text>{ {today: '今天', week: '本周', month: '本月', all: '全部'}[r] }</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+            {playerAgg.map((p, i) => (
+              <View key={p.name} className={styles.aggregateRow}>
+                <Text className={styles.aggregateRank}>{['🥇','🥈','🥉','🏅'][Math.min(i, 3)]}</Text>
+                <Text className={styles.aggregateName}>{p.name}</Text>
+                <Text className={p.total > 0 ? styles.deltaPos : p.total < 0 ? styles.deltaNeg : styles.deltaZero}>
+                  {p.total >= 0 ? '+' : ''}{p.total}
+                </Text>
+                <Text className={styles.aggregateMeta}>
+                  {p.sessionCount} 局 / {p.roundCount} 把
+                </Text>
+              </View>
+            ))}
+            <View className={styles.csvBtn} onClick={exportAllCSV}>
+              <Text>📥 全部导出 CSV</Text>
+            </View>
+          </View>
         )}
 
         {archivedSessions.length > 0 && (

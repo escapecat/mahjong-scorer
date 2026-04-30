@@ -215,6 +215,59 @@ export default function SessionPage() {
     Taro.showToast({ title: 'CSV 已复制,粘贴到表格软件即可', icon: 'none', duration: 2000 });
   }, [store]);
 
+  const backupSession = useCallback(() => {
+    if (!active) return;
+    const json = JSON.stringify(active);
+    Taro.setClipboardData({ data: json });
+    Taro.showToast({ title: '备份 JSON 已复制', icon: 'success', duration: 1500 });
+  }, [active]);
+
+  const importSession = useCallback(async () => {
+    let text: string | null = null;
+    if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+      text = window.prompt('粘贴备份 JSON:');
+    } else {
+      try {
+        const r = await Taro.getClipboardData();
+        text = r.data || null;
+      } catch (e) { /* ignore */ }
+    }
+    if (!text) return;
+    try {
+      const parsed = JSON.parse(text.trim());
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        typeof parsed.id !== 'string' ||
+        !Array.isArray(parsed.players) ||
+        parsed.players.length !== 4 ||
+        !Array.isArray(parsed.rounds)
+      ) {
+        Taro.showToast({ title: '不是有效的备份 JSON', icon: 'none', duration: 1800 });
+        return;
+      }
+      // Re-id so it doesn't collide with an existing session
+      const imported: Session = {
+        id: `imp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+        startTime: typeof parsed.startTime === 'number' ? parsed.startTime : Date.now(),
+        endTime: typeof parsed.endTime === 'number' ? parsed.endTime : undefined,
+        players: parsed.players,
+        rounds: parsed.rounds,
+        baseScore: typeof parsed.baseScore === 'number' ? parsed.baseScore : 8,
+      };
+      setStore((prev) => ({
+        // Make the imported session the active one so user immediately sees it
+        activeSessionId: imported.id,
+        sessions: [...prev.sessions.map((s) =>
+          s.id === prev.activeSessionId ? { ...s, endTime: s.endTime ?? Date.now() } : s
+        ), imported],
+      }));
+      Taro.showToast({ title: '已导入', icon: 'success', duration: 1200 });
+    } catch (e) {
+      Taro.showToast({ title: 'JSON 解析失败', icon: 'none', duration: 1800 });
+    }
+  }, []);
+
   const todayTotal = useMemo(() => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -252,6 +305,9 @@ export default function SessionPage() {
             <Text className={styles.emptyHint}>当前没有进行中的对局</Text>
             <View className={styles.startBtn} onClick={() => setShowSetup(true)}>
               <Text>🎲 新开一局</Text>
+            </View>
+            <View className={styles.importBtn} onClick={importSession}>
+              <Text>📥 导入备份 JSON</Text>
             </View>
           </View>
         )}
@@ -332,8 +388,13 @@ export default function SessionPage() {
               <View className={styles.historyHeader}>
                 <Text className={styles.historyTitle}>📜 流水 ({active.rounds.length} 把)</Text>
                 {active.rounds.length > 0 && (
-                  <View className={styles.copyBtn} onClick={copySession}>
-                    <Text>📋 复制</Text>
+                  <View className={styles.headerActions}>
+                    <View className={styles.copyBtn} onClick={copySession}>
+                      <Text>📋 复制</Text>
+                    </View>
+                    <View className={styles.copyBtn} onClick={backupSession}>
+                      <Text>💾 备份</Text>
+                    </View>
                   </View>
                 )}
               </View>

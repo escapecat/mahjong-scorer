@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { View, Image, Text } from '@tarojs/components';
 import { TileSet } from '../engine/models/tileSet';
-import { tileFromIndex, tileEquals, tileToDisplay, type Tile } from '../engine/models/tile';
+import { tileFromIndex, type Tile } from '../engine/models/tile';
 import type { Meld } from '../engine/models/meld';
 import type { GameContext } from '../engine/models/types';
 import { analyzeDiscards, type DiscardOption } from '../engine/discardAnalyzer';
@@ -16,31 +16,14 @@ interface Props {
 
 export function DiscardSuggestion({ allCounts, lockedMelds, game }: Props) {
   const [open, setOpen] = useState(false);
-  const [advancedMode, setAdvancedMode] = useState(false);
-  const [knownDiscards, setKnownDiscards] = useState<number[]>(() => new Array(34).fill(0));
   const [expandedDiscardIdx, setExpandedDiscardIdx] = useState<number | null>(null);
-
-  const knownDiscardSet = useMemo(() => TileSet.fromCounts(knownDiscards), [knownDiscards]);
 
   const results = useMemo<DiscardOption[]>(() => {
     if (!open) return [];
-    return analyzeDiscards(allCounts, lockedMelds, game, advancedMode ? knownDiscardSet : undefined);
-  }, [open, allCounts, lockedMelds, game, advancedMode, knownDiscardSet]);
+    return analyzeDiscards(allCounts, lockedMelds, game);
+  }, [open, allCounts, lockedMelds, game]);
 
   const tenpaiResults = results.filter(r => r.uniqueWaitCount > 0);
-  const noTenpaiResults = results.filter(r => r.uniqueWaitCount === 0);
-
-  function toggleKnownDiscard(idx: number, delta: number) {
-    setKnownDiscards(prev => {
-      const next = [...prev];
-      next[idx] = Math.max(0, Math.min(4, next[idx] + delta));
-      return next;
-    });
-  }
-
-  function clearKnownDiscards() {
-    setKnownDiscards(new Array(34).fill(0));
-  }
 
   if (!open) {
     return (
@@ -59,60 +42,12 @@ export function DiscardSuggestion({ allCounts, lockedMelds, game }: Props) {
         </View>
       </View>
 
-      <View className={styles.modeRow}>
-        <View
-          className={`${styles.modeChip} ${!advancedMode ? styles.modeChipActive : ''}`}
-          onClick={() => setAdvancedMode(false)}
-        >
-          <Text>简单模式</Text>
-        </View>
-        <View
-          className={`${styles.modeChip} ${advancedMode ? styles.modeChipActive : ''}`}
-          onClick={() => setAdvancedMode(true)}
-        >
-          <Text>高级（含已弃）</Text>
-        </View>
+      <View className={styles.note}>
+        <Text>听张数=理论最多（4 - 你手中已有）。实战中需自行扣除桌面已弃。</Text>
       </View>
 
-      {advancedMode && (
-        <View className={styles.knownDiscardSection}>
-          <View className={styles.knownDiscardHeader}>
-            <Text className={styles.subtitle}>桌面已弃牌（点击 +/- 调整）</Text>
-            <View className={styles.smallBtn} onClick={clearKnownDiscards}>
-              <Text>清空</Text>
-            </View>
-          </View>
-          <View className={styles.knownGrid}>
-            {Array.from({ length: 34 }, (_, i) => {
-              const tile = tileFromIndex(i);
-              const count = knownDiscards[i];
-              return (
-                <View key={i} className={styles.knownItem}>
-                  <Image className={styles.tileImg} src={tileIconPath(tile)} mode='aspectFit' />
-                  <View className={styles.knownControls}>
-                    <View className={styles.miniBtn} onClick={() => toggleKnownDiscard(i, -1)}>
-                      <Text>−</Text>
-                    </View>
-                    <Text className={styles.knownCount}>{count}</Text>
-                    <View className={styles.miniBtn} onClick={() => toggleKnownDiscard(i, 1)}>
-                      <Text>+</Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {!advancedMode && (
-        <View className={styles.note}>
-          <Text>提示：听张数=理论最多（4 - 你的牌）。点"高级模式"可加入桌面已弃牌的精确计算。</Text>
-        </View>
-      )}
-
       <View className={styles.list}>
-        {tenpaiResults.length === 0 && noTenpaiResults.length === results.length && (
+        {tenpaiResults.length === 0 && (
           <Text className={styles.empty}>无任何弃牌可达听牌（向听数 ≥ 1）</Text>
         )}
         {tenpaiResults.slice(0, 8).map((r, idx) => {
@@ -127,11 +62,7 @@ export function DiscardSuggestion({ allCounts, lockedMelds, game }: Props) {
                 <View className={styles.summary}>
                   <Text className={styles.summaryText}>
                     听 <Text className={styles.summaryNum}>{r.uniqueWaitCount}</Text> 种
-                    {advancedMode ? (
-                      <Text>（剩 <Text className={styles.summaryNum}>{r.totalRemaining}</Text> 张）</Text>
-                    ) : (
-                      <Text>（共 <Text className={styles.summaryNum}>{r.totalRemaining}</Text> 张）</Text>
-                    )}
+                    （共 <Text className={styles.summaryNum}>{r.totalRemaining}</Text> 张）
                   </Text>
                   <Text className={styles.summaryScore}>最高 {r.maxScore} 番</Text>
                 </View>

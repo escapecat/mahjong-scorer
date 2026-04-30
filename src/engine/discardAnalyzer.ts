@@ -7,7 +7,7 @@ import { evaluate } from './evaluator';
 
 export interface WinningTileInfo {
   tile: Tile;
-  /** Copies still potentially available (4 - your copies - known discards) */
+  /** Copies theoretically remaining (4 minus your own copies; ignores table discards) */
   remaining: number;
   /** Score if you win on this tile */
   score: number;
@@ -16,9 +16,9 @@ export interface WinningTileInfo {
 export interface DiscardOption {
   discardTile: Tile;
   winningTiles: WinningTileInfo[];
-  /** Sum of `remaining` across all winning tiles — actual playable wait count */
+  /** Sum of `remaining` across all winning tiles */
   totalRemaining: number;
-  /** Number of distinct winning tile types — theoretical wait variety */
+  /** Number of distinct winning tile types */
   uniqueWaitCount: number;
   /** Highest possible score among winning tiles */
   maxScore: number;
@@ -30,14 +30,11 @@ export interface DiscardOption {
  * @param allCounts - All 14 tiles (hand + meld tiles)
  * @param lockedMelds - Open melds (chi/peng/kong)
  * @param game - Game context (for scoring)
- * @param knownDiscards - Optional: tiles already seen on the table
- *                       (so 'remaining' reflects actually-available tiles)
  */
 export function analyzeDiscards(
   allCounts: TileSet,
   lockedMelds: readonly Meld[],
   game: GameContext,
-  knownDiscards?: TileSet,
 ): DiscardOption[] {
   const handCounts = subtractMelds(allCounts, lockedMelds);
   const results: DiscardOption[] = [];
@@ -46,22 +43,18 @@ export function analyzeDiscards(
     if (handCounts.getByIndex(i) === 0) continue;
     const discardTile = tileFromIndex(i);
 
-    // Simulate discarding this tile
     const afterAll = allCounts.clone();
     afterAll.remove(discardTile);
 
-    // Find all potential winning tiles
     const winningTiles: WinningTileInfo[] = [];
     for (let j = 0; j < 34; j++) {
       const ownCopies = afterAll.getByIndex(j);
       if (ownCopies >= 4) continue;
 
-      // Try adding tile j as the winning tile
       const test = afterAll.clone();
       test.add(tileFromIndex(j));
       if (!isWinningHandWithMelds(test, [...lockedMelds])) continue;
 
-      // Compute score with this winning tile
       const winTile = tileFromIndex(j);
       const result: EvaluationResult = evaluate(
         test,
@@ -69,9 +62,8 @@ export function analyzeDiscards(
         { ...game, winningTile: winTile },
       );
 
-      // Calculate "remaining" = 4 - own copies - known discards
-      const knownCount = knownDiscards?.getByIndex(j) ?? 0;
-      const remaining = Math.max(0, 4 - ownCopies - knownCount);
+      // Theoretical max remaining = 4 minus your own copies
+      const remaining = Math.max(0, 4 - ownCopies);
 
       winningTiles.push({ tile: winTile, remaining, score: result.totalFan });
     }
@@ -90,8 +82,6 @@ export function analyzeDiscards(
     });
   }
 
-  // Sort: first by total remaining desc (more live tiles = better),
-  // then by unique wait count, then by max score
   results.sort((a, b) => {
     if (b.totalRemaining !== a.totalRemaining) return b.totalRemaining - a.totalRemaining;
     if (b.uniqueWaitCount !== a.uniqueWaitCount) return b.uniqueWaitCount - a.uniqueWaitCount;

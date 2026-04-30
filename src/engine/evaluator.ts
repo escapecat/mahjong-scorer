@@ -99,7 +99,9 @@ export function evaluate(
     return { totalFan: 0, fans: [], decompositionDescription: '', tileGroups: [], winningTileGroupIndex: -1 };
   }
 
-  return candidates.reduce((best, c) => c.totalFan > best.totalFan ? c : best);
+  // Sort by totalFan desc. Stable sort preserves engine order (special hands first, then standard).
+  const sorted = [...candidates].sort((a, b) => b.totalFan - a.totalFan);
+  return { ...sorted[0], allCandidates: sorted };
 }
 
 // ── Helpers ──

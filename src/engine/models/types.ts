@@ -110,4 +110,8 @@ export interface EvaluationResult {
   decompositionDescription: string;
   tileGroups: Tile[][];
   winningTileGroupIndex: number;
+  /** All valid decompositions sorted by totalFan desc. Only the top-level returned
+   *  result has this set; inner candidates leave it undefined. The first entry is
+   *  the same as the outer result. */
+  allCandidates?: EvaluationResult[];
 }

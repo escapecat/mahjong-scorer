@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { View, Image, Text } from '@tarojs/components';
 import type { EvaluationResult, GameContext } from '../engine/models/types';
 import type { Tile } from '../engine/models/tile';
@@ -20,18 +21,36 @@ interface Props {
 }
 
 export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFan, handCounts, lockedMelds, game }: Props) {
+  const candidates = result.allCandidates && result.allCandidates.length > 0
+    ? result.allCandidates
+    : [result];
+  const [selectedIdx, setSelectedIdx] = useState(0);
+
+  // Reset selection whenever the underlying result changes (new hand, new winning tile, etc.)
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [result]);
+
+  const display = candidates[Math.min(selectedIdx, candidates.length - 1)] ?? result;
+  const showSwitcher = candidates.length > 1;
+  const bestFan = candidates[0]?.totalFan ?? display.totalFan;
+  const fanDelta = display.totalFan - bestFan;
+
+  const goPrev = () => setSelectedIdx((i) => (i - 1 + candidates.length) % candidates.length);
+  const goNext = () => setSelectedIdx((i) => (i + 1) % candidates.length);
+
   // Render decomposition tile groups
   const renderGroups = () => {
-    if (!result.tileGroups || result.tileGroups.length === 0) return null;
+    if (!display.tileGroups || display.tileGroups.length === 0) return null;
     let winHighlighted = false;
 
     return (
       <View className={styles.decomp}>
-        {result.tileGroups.map((group, gIdx) => (
+        {display.tileGroups.map((group, gIdx) => (
           <View key={gIdx} className={styles.group}>
             {group.map((t, tIdx) => {
               const isWin = !winHighlighted && winningTile && tileEquals(t, winningTile)
-                && (result.winningTileGroupIndex < 0 || gIdx === result.winningTileGroupIndex);
+                && (display.winningTileGroupIndex < 0 || gIdx === display.winningTileGroupIndex);
               if (isWin) winHighlighted = true;
               return isWin ? (
                 <View key={tIdx} className={styles.winMarker}>
@@ -47,13 +66,26 @@ export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFa
     );
   };
 
-  const expandedFan = result.fans.find(f => f.name === expandedFanName);
+  const expandedFan = display.fans.find(f => f.name === expandedFanName);
 
   return (
     <View className={styles.container}>
+      {showSwitcher && (
+        <View className={styles.switcher}>
+          <Text className={styles.switcherLabel}>解 {selectedIdx + 1}/{candidates.length}</Text>
+          <Text className={styles.switcherFan}>
+            {display.totalFan}番
+            {fanDelta < 0 && <Text className={styles.switcherDelta}> (差 {-fanDelta})</Text>}
+          </Text>
+          <View className={styles.switcherArrows}>
+            <View className={styles.switcherBtn} onClick={goPrev}><Text>◀</Text></View>
+            <View className={styles.switcherBtn} onClick={goNext}><Text>▶</Text></View>
+          </View>
+        </View>
+      )}
       {renderGroups()}
       <View className={styles.fanBar}>
-        {result.fans.map((fan, i) => (
+        {display.fans.map((fan, i) => (
           <View
             key={i}
             className={`${styles.fanChip} ${expandedFanName === fan.name ? styles.expanded : ''}`}
@@ -69,7 +101,7 @@ export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFa
         </View>
       )}
       <View className={styles.shareWrap}>
-        <ShareButton result={result} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
+        <ShareButton result={display} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
       </View>
     </View>
   );

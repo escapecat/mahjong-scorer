@@ -13,7 +13,6 @@ Possible features to add, ranked by effort vs value.
 | 3 | **Hand history** — last 10 calculated hands, click to restore | Recover from accidental clear; compare hands |
 | 4 | **Sort hand tiles** — 万 then 筒 then 条 then 字 (currently random order) | Easier to read |
 | 5 | **Better empty state** — show example hands when calculator is empty | Helps new users |
-| 6 | **Tile counter** — show how many of each tile remain in the wall (4 minus used) | Useful during play |
 
 ---
 
@@ -62,6 +61,7 @@ Possible features to add, ranked by effort vs value.
 | **Multiplayer / online play** | Whole different app. |
 | **AI opponent** | Whole different app, requires game engine + AI. |
 | **Live game tracking (companion app)** | Niche use case, complex UI. |
+| **Tile counter (remaining in wall)** | App only sees your hand, not other players' discards. Without manually inputting discards, the count is misleading. The 4-tile cap is already enforced via disabled buttons. |
 
 ---
 

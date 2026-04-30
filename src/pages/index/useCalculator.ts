@@ -7,6 +7,7 @@ import { evaluate } from '../../engine/evaluator';
 import { isWinningHandWithMelds } from '../../engine/decomposer';
 import { calculateShanten } from '../../engine/shantenCalculator';
 import { saveState, loadState } from './stateStorage';
+import { serializeHand, type HandStringData } from '../../engine/handString';
 
 // ── Types ──
 
@@ -56,7 +57,8 @@ type Action =
   | { type: 'EXPAND_FAN'; name: string | null }
   | { type: 'CLEAR_ALL' }
   | { type: 'UNDO' }
-  | { type: 'REDO' };
+  | { type: 'REDO' }
+  | { type: 'IMPORT_HAND'; data: import('../../engine/handString').HandStringData };
 
 /** Actions that don't change "content" — purely UI state. They don't go on the history stack. */
 const NON_HISTORY_ACTIONS = new Set<Action['type']>([
@@ -250,6 +252,21 @@ function reducer(state: State, action: Action): State {
       return { ...state, expandedFanName: state.expandedFanName === action.name ? null : action.name };
     case 'CLEAR_ALL':
       return { ...initialState, settingsOpen: state.settingsOpen };
+    case 'IMPORT_HAND': {
+      const counts = new Array(34).fill(0);
+      for (const t of action.data.hand) counts[tileIndex(t)]++;
+      return {
+        ...state,
+        handCounts: counts,
+        chiMelds: [...action.data.chiMelds],
+        pengMelds: [...action.data.pengMelds],
+        mingKongMelds: [...action.data.mingKongMelds],
+        anKongMelds: [...action.data.anKongMelds],
+        winningTile: action.data.winningTile,
+        expandedWaitTile: null,
+        expandedFanName: null,
+      };
+    }
     default:
       return state;
   }
@@ -480,6 +497,22 @@ export function useCalculator() {
     return isAtLimit || getTotalForTile(state, t) >= 4;
   }, [state, isAtLimit]);
 
+  const exportHandString = useCallback((): string => {
+    const handTiles: Tile[] = [];
+    for (let i = 0; i < 34; i++) {
+      for (let n = 0; n < state.handCounts[i]; n++) handTiles.push(tileFromIndex(i));
+    }
+    const data: HandStringData = {
+      hand: handTiles,
+      chiMelds: [...state.chiMelds],
+      pengMelds: [...state.pengMelds],
+      mingKongMelds: [...state.mingKongMelds],
+      anKongMelds: [...state.anKongMelds],
+      winningTile: state.winningTile,
+    };
+    return serializeHand(data);
+  }, [state]);
+
   return {
     state,
     dispatch,
@@ -494,5 +527,6 @@ export function useCalculator() {
     winSuggestions,
     addTileToTarget,
     isTileDisabled,
+    exportHandString,
   };
 }

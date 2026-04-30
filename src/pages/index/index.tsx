@@ -1,5 +1,7 @@
 import { View } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import { useCalculator } from './useCalculator';
+import { parseHandString } from '../../engine/handString';
 import { ScoreBar } from '../../components/ScoreBar';
 import { SettingsPanel } from '../../components/SettingsPanel';
 import { HandDisplay } from '../../components/HandDisplay';
@@ -17,8 +19,46 @@ export default function Index() {
     state, dispatch, total, expected,
     currentResult, winSuggestions, addTileToTarget, isTileDisabled,
     discardAnalysisInputs, fanPotentialInputs,
-    canUndo, canRedo,
+    canUndo, canRedo, exportHandString,
   } = useCalculator();
+
+  async function handleCopy() {
+    const s = exportHandString();
+    if (!s || s === '(空)') {
+      Taro.showToast({ title: '手牌为空', icon: 'none', duration: 1500 });
+      return;
+    }
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(s);
+      } else {
+        await Taro.setClipboardData({ data: s });
+      }
+      Taro.showToast({ title: '已复制', icon: 'success', duration: 1200 });
+    } catch (e) {
+      Taro.showToast({ title: '复制失败', icon: 'none', duration: 1500 });
+    }
+  }
+
+  async function handlePaste() {
+    let text: string | null = null;
+    if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+      text = window.prompt('粘贴手牌字符串，例如:\n1133m456p99s | c1m | p3p | *7p');
+    } else {
+      try {
+        const r = await Taro.getClipboardData();
+        text = r.data || null;
+      } catch (e) { /* ignore */ }
+    }
+    if (!text) return;
+    const parsed = parseHandString(text);
+    if (!parsed) {
+      Taro.showToast({ title: '格式无法识别', icon: 'none', duration: 1800 });
+      return;
+    }
+    dispatch({ type: 'IMPORT_HAND', data: parsed });
+    Taro.showToast({ title: '已导入', icon: 'success', duration: 1200 });
+  }
 
   // Build meld entries for HandDisplay
   const meldEntries = [
@@ -70,6 +110,8 @@ export default function Index() {
           canRedo={canRedo}
           onUndo={() => dispatch({ type: 'UNDO' })}
           onRedo={() => dispatch({ type: 'REDO' })}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
           onRemoveTile={(t) => dispatch({ type: 'REMOVE_HAND_TILE', tile: t })}
           onRemoveMeld={(meldType, index) => dispatch({ type: 'REMOVE_MELD', meldType: meldType as any, index })}
           onClear={() => dispatch({ type: 'CLEAR_ALL' })}

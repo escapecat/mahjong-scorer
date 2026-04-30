@@ -32,6 +32,7 @@
     "@babel/runtime": "^7.24.0",
     "@tarojs/webpack5-runner": "4.2.0",
     "@types/react": "^18.3.0",
+    "@types/react-dom": "^19.2.3",
     "babel-preset-taro": "^4.2.0",
     "css-minimizer-webpack-plugin": "^8.0.0",
     "postcss": "^8.5.12",

@@ -19,12 +19,14 @@ interface Props {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
+  onCopy: () => void;
+  onPaste: () => void;
   onRemoveTile: (t: Tile) => void;
   onRemoveMeld: (meldType: string, index: number) => void;
   onClear: () => void;
 }
 
-export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, canUndo, canRedo, onUndo, onRedo, onRemoveTile, onRemoveMeld, onClear }: Props) {
+export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, canUndo, canRedo, onUndo, onRedo, onCopy, onPaste, onRemoveTile, onRemoveMeld, onClear }: Props) {
   // Build sorted tile list from handCounts
   const handTiles: Tile[] = [];
   for (let i = 0; i < 34; i++) {
@@ -65,6 +67,12 @@ export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, canUndo, canR
         onClick={() => canRedo && onRedo()}
       >
         <Text>↷</Text>
+      </View>
+      <View className={styles.iconBtn} onClick={onCopy}>
+        <Text>📋</Text>
+      </View>
+      <View className={styles.iconBtn} onClick={onPaste}>
+        <Text>📥</Text>
       </View>
       <View className={styles.clearBtn} onClick={onClear}>
         <Text>✕</Text>

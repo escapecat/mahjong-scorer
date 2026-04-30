@@ -18,6 +18,7 @@ import {
 } from './sessionStorage';
 import { aggregateByPlayer, sessionsToCSV, buildRunningTotals, type TimeRange } from './aggregation';
 import { TrendChart } from '../../components/TrendChart';
+import { SessionShareButton } from '../../components/SessionShareButton';
 import styles from './index.module.css';
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉', '🏅'];
@@ -395,6 +396,9 @@ export default function SessionPage() {
                     <View className={styles.copyBtn} onClick={backupSession}>
                       <Text>💾 备份</Text>
                     </View>
+                    {process.env.TARO_ENV === 'h5' && (
+                      <SessionShareButton session={active} />
+                    )}
                   </View>
                 )}
               </View>

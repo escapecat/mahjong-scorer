@@ -397,9 +397,25 @@
   color: #64748b;
   font-weight: 600;
 }
+.archiveTopRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .archiveCount {
   font-size: 11px;
   color: #94a3b8;
+}
+.archiveDelete {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 11px;
 }
 .archiveScores {
   display: flex;

@@ -6,7 +6,7 @@ import styles from './RoundEntryModal.module.css';
 
 interface Props {
   players: readonly [string, string, string, string];
-  /** 起和番 carried by the parent session. Used in auto-mode preview/save. */
+  /** 起和番 carried by the parent session. Used in auto preview/save. */
   baseScore: number;
   initial?: Round;     // present when editing
   onSave: (round: Round) => void;
@@ -14,16 +14,10 @@ interface Props {
 }
 
 export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel }: Props) {
-  const [mode, setMode] = useState<'auto' | 'manual'>(initial?.manualDeltas ? 'manual' : 'auto');
   const [type, setType] = useState<WinType>(initial?.type ?? 'selfDraw');
   const [winnerSeat, setWinnerSeat] = useState<number | null>(initial?.winnerSeat ?? null);
   const [discarderSeat, setDiscarderSeat] = useState<number | null>(initial?.discarderSeat ?? null);
   const [fanText, setFanText] = useState<string>(initial?.fan != null ? String(initial.fan) : String(baseScore));
-  const [manualText, setManualText] = useState<[string, string, string, string]>(
-    initial?.manualDeltas
-      ? [String(initial.manualDeltas[0]), String(initial.manualDeltas[1]), String(initial.manualDeltas[2]), String(initial.manualDeltas[3])]
-      : ['', '', '', '']
-  );
 
   // When switching to selfDraw, drop the discarder; switching to draw, drop both
   useEffect(() => {
@@ -37,24 +31,15 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
   const fan = parseInt(fanText, 10);
   const fanValid = !isNaN(fan) && fan >= 0;
 
-  const manualNums = manualText.map((s) => {
-    const n = parseInt(s, 10);
-    return isNaN(n) ? 0 : n;
-  }) as [number, number, number, number];
-  const manualSum = manualNums.reduce((a, b) => a + b, 0);
-  const manualAnyFilled = manualText.some((s) => s.trim() !== '');
-
   const canSave =
-    mode === 'manual'
-      ? manualAnyFilled
-      : type === 'draw'
-        ? true
-        : type === 'selfDraw'
-          ? winnerSeat != null && fanValid
-          : winnerSeat != null && discarderSeat != null && winnerSeat !== discarderSeat && fanValid;
+    type === 'draw'
+      ? true
+      : type === 'selfDraw'
+        ? winnerSeat != null && fanValid
+        : winnerSeat != null && discarderSeat != null && winnerSeat !== discarderSeat && fanValid;
 
-  // Live preview of deltas (auto mode only — manual mode shows the inputs themselves)
-  const preview = mode === 'auto' && canSave && type !== 'draw'
+  // Live preview of deltas
+  const preview = canSave && type !== 'draw'
     ? computeRoundDeltas({
         id: '_preview',
         timestamp: 0,
@@ -68,26 +53,9 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
 
   function save() {
     if (!canSave) return;
-    const id = initial?.id ?? `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-    const timestamp = initial?.timestamp ?? Date.now();
-    if (mode === 'manual') {
-      // Use 'discard' as a neutral type for the round; deltas are taken from manualDeltas
-      // and we still store the winner/fan if the user filled them, for historical context.
-      onSave({
-        id,
-        timestamp,
-        type: type === 'draw' ? 'draw' : type,
-        winnerSeat: winnerSeat ?? undefined,
-        discarderSeat: type === 'discard' ? discarderSeat ?? undefined : undefined,
-        fan: type === 'draw' ? undefined : (fanValid ? fan : undefined),
-        baseScore,
-        manualDeltas: manualNums,
-      });
-      return;
-    }
     onSave({
-      id,
-      timestamp,
+      id: initial?.id ?? `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: initial?.timestamp ?? Date.now(),
       type,
       winnerSeat: winnerSeat ?? undefined,
       discarderSeat: type === 'discard' ? discarderSeat ?? undefined : undefined,
@@ -118,18 +86,6 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
         </View>
 
         <View className={styles.formRow}>
-          <Text className={styles.formLabel}>计分方式</Text>
-          <View className={styles.toggleRow}>
-            <View className={`${styles.toggle} ${mode === 'auto' ? styles.toggleActive : ''}`} onClick={() => setMode('auto')}>
-              <Text>自动算(国标)</Text>
-            </View>
-            <View className={`${styles.toggle} ${mode === 'manual' ? styles.toggleActive : ''}`} onClick={() => setMode('manual')}>
-              <Text>手动填分</Text>
-            </View>
-          </View>
-        </View>
-
-        <View className={styles.formRow}>
           <Text className={styles.formLabel}>结果</Text>
           <View className={styles.toggleRow}>
             <View className={`${styles.toggle} ${type === 'selfDraw' ? styles.toggleActive : ''}`} onClick={() => setType('selfDraw')}>
@@ -146,7 +102,7 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
 
         {type !== 'draw' && (
           <View className={styles.formRow}>
-            <Text className={styles.formLabel}>赢家{mode === 'manual' ? <Text className={styles.formHint}> (可选,记录用)</Text> : null}</Text>
+            <Text className={styles.formLabel}>赢家</Text>
             <View className={styles.seatRow}>
               {[0, 1, 2, 3].map((s) => seatBtn(s, winnerSeat === s, () => setWinnerSeat(s)))}
             </View>
@@ -155,7 +111,7 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
 
         {type === 'discard' && (
           <View className={styles.formRow}>
-            <Text className={styles.formLabel}>谁打的(点炮方){mode === 'manual' ? <Text className={styles.formHint}> (可选,记录用)</Text> : null}</Text>
+            <Text className={styles.formLabel}>谁打的(点炮方)</Text>
             <View className={styles.seatRow}>
               {[0, 1, 2, 3].map((s) =>
                 seatBtn(s, discarderSeat === s, () => s !== winnerSeat && setDiscarderSeat(s))
@@ -167,10 +123,7 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
         {type !== 'draw' && (
           <View className={styles.formRow}>
             <Text className={styles.formLabel}>
-              番数
-              {mode === 'auto'
-                ? <Text className={styles.formHint}> (含花牌,本局底分 {baseScore})</Text>
-                : <Text className={styles.formHint}> (可选,记录用)</Text>}
+              番数 <Text className={styles.formHint}>(含花牌,本局底分 {baseScore})</Text>
             </Text>
             <Input
               className={styles.fanInput}
@@ -182,36 +135,9 @@ export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel 
           </View>
         )}
 
-        {mode === 'manual' && type !== 'draw' && (
-          <View className={styles.formRow}>
-            <Text className={styles.formLabel}>各人得分 <Text className={styles.formHint}>(正数赢、负数输,可不为零)</Text></Text>
-            <View className={styles.manualRow}>
-              {[0, 1, 2, 3].map((s) => (
-                <View key={s} className={styles.manualCell}>
-                  <Text className={styles.manualSeat}>{SEAT_LABELS[s]}</Text>
-                  <Input
-                    className={styles.manualInput}
-                    type='digit'
-                    value={manualText[s]}
-                    placeholder='0'
-                    onInput={(e) => {
-                      const next = [...manualText] as [string, string, string, string];
-                      next[s] = e.detail.value;
-                      setManualText(next);
-                    }}
-                  />
-                </View>
-              ))}
-            </View>
-            <Text className={`${styles.manualSumHint} ${manualSum === 0 ? styles.manualSumOk : styles.manualSumWarn}`}>
-              4 人合计: {manualSum >= 0 ? '+' : ''}{manualSum}{manualSum !== 0 ? ' (一般为 0)' : ''}
-            </Text>
-          </View>
-        )}
-
         {preview && (
           <View className={styles.preview}>
-            <Text className={styles.previewLabel}>本回合得分(自动算)</Text>
+            <Text className={styles.previewLabel}>本回合得分</Text>
             <View className={styles.previewRow}>
               {preview.map((d, i) => (
                 <View key={i} className={styles.previewCell}>

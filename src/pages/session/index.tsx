@@ -144,6 +144,23 @@ export default function SessionPage() {
     [active]
   );
 
+  const deleteSession = useCallback((sessionId: string) => {
+    Taro.showModal({
+      title: '删除这局历史?',
+      content: '此操作不可撤销。',
+      confirmText: '删除',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          setStore((prev) => ({
+            ...prev,
+            sessions: prev.sessions.filter((s) => s.id !== sessionId),
+          }));
+        }
+      },
+    });
+  }, []);
+
   const archiveCurrent = useCallback(() => {
     if (!active) return;
     Taro.showModal({
@@ -344,7 +361,12 @@ export default function SessionPage() {
                 <View key={s.id} className={styles.archiveRow}>
                   <View className={styles.archiveTop}>
                     <Text className={styles.archiveTime}>⏰ {formatTime(s.startTime)}</Text>
-                    <Text className={styles.archiveCount}>{s.rounds.length} 把</Text>
+                    <View className={styles.archiveTopRight}>
+                      <Text className={styles.archiveCount}>{s.rounds.length} 把</Text>
+                      <View className={styles.archiveDelete} onClick={() => deleteSession(s.id)}>
+                        <Text>🗑</Text>
+                      </View>
+                    </View>
                   </View>
                   <View className={styles.archiveScores}>
                     {sumD.map((v, j) => (

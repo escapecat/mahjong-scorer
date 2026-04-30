@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { View, Text } from '@tarojs/components';
 import html2canvas from 'html2canvas';
 import { ShareCard } from './ShareCard';
@@ -63,47 +64,50 @@ export function ShareButton({ result, handCounts, lockedMelds, game }: Props) {
     setImageUrl(null);
   }
 
+  const modal = showPreview ? (
+    <View className={styles.modal} onClick={close}>
+      <View className={styles.modalInner} onClick={(e: any) => e.stopPropagation && e.stopPropagation()}>
+        <View className={styles.modalHeader}>
+          <Text className={styles.modalTitle}>分享图片</Text>
+          <View className={styles.modalClose} onClick={close}>
+            <Text>✕</Text>
+          </View>
+        </View>
+
+        {/* Hidden render area for html2canvas to capture */}
+        <View className={styles.hiddenStage}>
+          <ShareCard ref={cardRef} result={result} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
+        </View>
+
+        {/* Preview area */}
+        {generating && (
+          <View className={styles.loading}>
+            <Text>生成中…</Text>
+          </View>
+        )}
+        {imageUrl && (
+          <>
+            <img className={styles.previewImg} src={imageUrl} alt='share' />
+            <View className={styles.actions}>
+              <View className={styles.downloadBtn} onClick={downloadImage}>
+                <Text>下载图片</Text>
+              </View>
+              <Text className={styles.hint}>长按图片可以保存或转发到微信</Text>
+            </View>
+          </>
+        )}
+      </View>
+    </View>
+  ) : null;
+
   return (
     <>
       <View className={styles.shareBtn} onClick={generate}>
         <Text>📷 生成分享图</Text>
       </View>
-
-      {showPreview && (
-        <View className={styles.modal} onClick={close}>
-          <View className={styles.modalInner} onClick={(e: any) => e.stopPropagation && e.stopPropagation()}>
-            <View className={styles.modalHeader}>
-              <Text className={styles.modalTitle}>分享图片</Text>
-              <View className={styles.modalClose} onClick={close}>
-                <Text>✕</Text>
-              </View>
-            </View>
-
-            {/* Hidden render area for html2canvas to capture */}
-            <View className={styles.hiddenStage}>
-              <ShareCard ref={cardRef} result={result} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
-            </View>
-
-            {/* Preview area */}
-            {generating && (
-              <View className={styles.loading}>
-                <Text>生成中…</Text>
-              </View>
-            )}
-            {imageUrl && (
-              <>
-                <img className={styles.previewImg} src={imageUrl} alt='share' />
-                <View className={styles.actions}>
-                  <View className={styles.downloadBtn} onClick={downloadImage}>
-                    <Text>下载图片</Text>
-                  </View>
-                  <Text className={styles.hint}>长按图片可以保存或转发到微信</Text>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      )}
+      {/* Portal to body so the modal escapes any Taro page wrapper / scroll container
+       *  and reliably covers the TileKeyboard + BottomNav at the viewport bottom. */}
+      {modal && typeof document !== 'undefined' && createPortal(modal, document.body)}
     </>
   );
 }

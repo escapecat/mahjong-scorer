@@ -15,16 +15,21 @@
 
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  width: 100vw;
+  /* dvh covers the URL bar correctly on mobile; vh fallback for older browsers */
+  height: 100vh;
+  height: 100dvh;
   background: rgba(15, 23, 42, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 99999;
   padding: 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  /* New stacking context, keeps everything underneath cleanly behind */
+  isolation: isolate;
+  box-sizing: border-box;
 }
 .modalInner {
   background: #fff;
@@ -32,10 +37,13 @@
   padding: 16px;
   max-width: 90vw;
   max-height: 90vh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 .modalHeader {
   display: flex;

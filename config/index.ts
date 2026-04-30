@@ -28,6 +28,8 @@ export default defineConfig(async (merge) => {
           { from: 'src/manifest.webmanifest', to: 'dist/manifest.webmanifest' },
           { from: 'src/sw.js', to: 'dist/sw.js' },
           { from: 'src/icon.svg', to: 'dist/icon.svg' },
+          { from: 'src/icon-192.png', to: 'dist/icon-192.png' },
+          { from: 'src/icon-512.png', to: 'dist/icon-512.png' },
         ],
         options: {},
       },

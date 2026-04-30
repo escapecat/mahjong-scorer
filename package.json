@@ -35,6 +35,7 @@
     "babel-preset-taro": "^4.2.0",
     "css-minimizer-webpack-plugin": "^8.0.0",
     "postcss": "^8.5.12",
+    "sharp": "^0.34.5",
     "typescript": "^5.4.0",
     "vitest": "^3.0.0",
     "webpack": "5.91.0",

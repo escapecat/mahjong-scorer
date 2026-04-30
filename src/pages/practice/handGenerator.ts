@@ -381,16 +381,44 @@ export function generateWaitTileQuestion(): WaitTileQuestion | null {
 
     if (correctTileIndices.size === 0) continue;
 
-    // Pick distractors: tiles that are NOT valid waits
-    const distractors: number[] = [];
-    const tries = new Set<number>();
-    while (distractors.length < 4 && tries.size < 34) {
-      const idx = randInt(34);
-      if (tries.has(idx)) continue;
-      tries.add(idx);
-      if (correctTileIndices.has(idx)) continue;
-      distractors.push(idx);
+    // Pick "near miss" distractors — tiles likely to look tempting but aren't valid waits.
+    // Strategy: prioritize tiles adjacent to correct waits (±1 rank), tiles already in hand,
+    // and tiles in the same suits used by the hand. Fall back to random if needed.
+    const targetDistractorCount = 6;
+    const distractors = new Set<number>();
+    const tryAdd = (idx: number) => {
+      if (idx < 0 || idx >= 34) return;
+      if (correctTileIndices.has(idx)) return;
+      if (distractors.has(idx)) return;
+      if (distractors.size >= targetDistractorCount) return;
+      distractors.add(idx);
+    };
+
+    // 1) Adjacent ranks to each correct wait (±1, ±2 in same suit)
+    for (const idx of correctTileIndices) {
+      if (idx >= 27) continue; // honors don't have adjacents
+      const rank = idx % 9;
+      const suitBase = idx - rank;
+      if (rank > 0) tryAdd(suitBase + rank - 1);
+      if (rank < 8) tryAdd(suitBase + rank + 1);
+      if (rank > 1) tryAdd(suitBase + rank - 2);
+      if (rank < 7) tryAdd(suitBase + rank + 2);
     }
+
+    // 2) Tiles already in the hand (user might mistakenly pick them)
+    const handRaw = tenpaiHand.rawCounts();
+    const inHandShuffled: number[] = [];
+    for (let i = 0; i < 34; i++) {
+      if (handRaw[i] > 0) inHandShuffled.push(i);
+    }
+    inHandShuffled.sort(() => Math.random() - 0.5);
+    for (const idx of inHandShuffled) tryAdd(idx);
+
+    // 3) Random fallback
+    const fallback: number[] = [];
+    for (let i = 0; i < 34; i++) fallback.push(i);
+    fallback.sort(() => Math.random() - 0.5);
+    for (const idx of fallback) tryAdd(idx);
 
     const candidateIndices = [...correctTileIndices, ...distractors].sort(() => Math.random() - 0.5);
     const candidateTiles = candidateIndices.map(i => tileFromIndex(i));

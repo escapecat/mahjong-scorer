@@ -50,6 +50,10 @@ export interface FanOption {
 
 const ALL_FAN_DATA = new Map(ALL_FANS.map(f => [f.name, f]));
 
+/** Fans that shouldn't appear as practice options — they're automatic, not chosen */
+const EXCLUDED_FROM_PRACTICE = new Set(['花牌', '无番和']);
+const PRACTICE_FANS = ALL_FANS.filter(f => !EXCLUDED_FROM_PRACTICE.has(f.name));
+
 function randInt(max: number): number {
   return Math.floor(Math.random() * max);
 }
@@ -195,7 +199,6 @@ function pickDistractors(
   // Situational fans the user would expect to see based on game context
   if (game.isSelfDraw) expected.push('自摸');
   if (!game.hasOpenMeld) expected.push('门前清');
-  if (game.flowerCount > 0) expected.push('花牌');
   if (game.isLastTile) expected.push(game.isSelfDraw ? '妙手回春' : '海底捞月');
 
   // Tile-property fans the user would expect based on hand
@@ -247,9 +250,9 @@ function pickDistractors(
     distractors.add(n);
   }
 
-  // Fill remaining with random fans
+  // Fill remaining with random fans (excluding 花牌 / 无番和)
   if (distractors.size < count) {
-    const remaining = ALL_FANS
+    const remaining = PRACTICE_FANS
       .map(f => f.name)
       .filter(n => !correctNames.has(n) && !distractors.has(n))
       .sort(() => Math.random() - 0.5);
@@ -273,7 +276,7 @@ export function generateFanPickQuestion(): FanPickQuestion | null {
     if (result.totalFan === 0) continue;
 
     const correctFans = result.fans
-      .filter(f => !f.name.startsWith('花牌'))
+      .filter(f => !EXCLUDED_FROM_PRACTICE.has(f.name) && !f.name.startsWith('花牌'))
       .filter(f => ALL_FAN_DATA.has(f.name));
     if (correctFans.length === 0) continue;
 

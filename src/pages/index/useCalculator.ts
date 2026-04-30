@@ -54,7 +54,27 @@ type Action =
   | { type: 'ADD_WINNING_TILE'; tile: Tile }
   | { type: 'EXPAND_WAIT'; code: string | null }
   | { type: 'EXPAND_FAN'; name: string | null }
-  | { type: 'CLEAR_ALL' };
+  | { type: 'CLEAR_ALL' }
+  | { type: 'UNDO' }
+  | { type: 'REDO' };
+
+/** Actions that don't change "content" — purely UI state. They don't go on the history stack. */
+const NON_HISTORY_ACTIONS = new Set<Action['type']>([
+  'SET_ADD_TARGET',
+  'TOGGLE_SETTINGS',
+  'EXPAND_WAIT',
+  'EXPAND_FAN',
+  'UNDO',
+  'REDO',
+]);
+
+const MAX_HISTORY = 50;
+
+interface HistoryState {
+  past: State[];
+  present: State;
+  future: State[];
+}
 
 export interface WinSuggestion {
   tile: Tile;
@@ -235,6 +255,52 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+// History-wrapping reducer: tracks past/future for undo/redo, but only for content-changing actions.
+function historyReducer(hs: HistoryState, action: Action): HistoryState {
+  if (action.type === 'UNDO') {
+    if (hs.past.length === 0) return hs;
+    const previous = hs.past[hs.past.length - 1];
+    // Preserve UI-only fields (e.g. settingsOpen, addTarget) when restoring a past state
+    const restored: State = {
+      ...previous,
+      settingsOpen: hs.present.settingsOpen,
+      addTarget: hs.present.addTarget,
+      expandedWaitTile: hs.present.expandedWaitTile,
+      expandedFanName: hs.present.expandedFanName,
+    };
+    return {
+      past: hs.past.slice(0, -1),
+      present: restored,
+      future: [hs.present, ...hs.future],
+    };
+  }
+  if (action.type === 'REDO') {
+    if (hs.future.length === 0) return hs;
+    const next = hs.future[0];
+    const restored: State = {
+      ...next,
+      settingsOpen: hs.present.settingsOpen,
+      addTarget: hs.present.addTarget,
+      expandedWaitTile: hs.present.expandedWaitTile,
+      expandedFanName: hs.present.expandedFanName,
+    };
+    return {
+      past: [...hs.past, hs.present],
+      present: restored,
+      future: hs.future.slice(1),
+    };
+  }
+  const newPresent = reducer(hs.present, action);
+  if (newPresent === hs.present) return hs;
+  if (NON_HISTORY_ACTIONS.has(action.type)) {
+    return { ...hs, present: newPresent };
+  }
+  const past = hs.past.length >= MAX_HISTORY
+    ? [...hs.past.slice(hs.past.length - MAX_HISTORY + 1), hs.present]
+    : [...hs.past, hs.present];
+  return { past, present: newPresent, future: [] };
+}
+
 // ── Hook ──
 
 function lazyInit(): State {
@@ -246,8 +312,15 @@ function lazyInit(): State {
   } as State;
 }
 
+function lazyInitHistory(): HistoryState {
+  return { past: [], present: lazyInit(), future: [] };
+}
+
 export function useCalculator() {
-  const [state, dispatch] = useReducer(reducer, undefined, lazyInit);
+  const [historyState, dispatch] = useReducer(historyReducer, undefined, lazyInitHistory);
+  const state = historyState.present;
+  const canUndo = historyState.past.length > 0;
+  const canRedo = historyState.future.length > 0;
 
   // Persist on every state change
   useEffect(() => {
@@ -413,6 +486,8 @@ export function useCalculator() {
     total,
     expected,
     isAtLimit,
+    canUndo,
+    canRedo,
     discardAnalysisInputs,
     fanPotentialInputs,
     currentResult,

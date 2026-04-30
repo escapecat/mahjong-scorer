@@ -15,12 +15,16 @@ interface Props {
   handCounts: readonly number[];
   meldEntries: MeldEntry[];
   hasAnyMeld: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
   onRemoveTile: (t: Tile) => void;
   onRemoveMeld: (meldType: string, index: number) => void;
   onClear: () => void;
 }
 
-export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, onRemoveTile, onRemoveMeld, onClear }: Props) {
+export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, canUndo, canRedo, onUndo, onRedo, onRemoveTile, onRemoveMeld, onClear }: Props) {
   // Build sorted tile list from handCounts
   const handTiles: Tile[] = [];
   for (let i = 0; i < 34; i++) {
@@ -49,6 +53,18 @@ export function HandDisplay({ handCounts, meldEntries, hasAnyMeld, onRemoveTile,
           </View>
         ))}
         {isEmpty && <Text className={styles.placeholder}>点击下方牌键盘添加</Text>}
+      </View>
+      <View
+        className={`${styles.iconBtn} ${canUndo ? '' : styles.iconBtnDisabled}`}
+        onClick={() => canUndo && onUndo()}
+      >
+        <Text>↶</Text>
+      </View>
+      <View
+        className={`${styles.iconBtn} ${canRedo ? '' : styles.iconBtnDisabled}`}
+        onClick={() => canRedo && onRedo()}
+      >
+        <Text>↷</Text>
       </View>
       <View className={styles.clearBtn} onClick={onClear}>
         <Text>✕</Text>

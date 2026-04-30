@@ -18,6 +18,14 @@ export default defineConfig(async (merge) => {
     plugins: ['@tarojs/plugin-framework-react'],
     framework: 'react',
     compiler: 'webpack5',
+    copy: {
+      patterns: [
+        { from: 'src/manifest.webmanifest', to: 'dist/manifest.webmanifest' },
+        { from: 'src/sw.js', to: 'dist/sw.js' },
+        { from: 'src/icon.svg', to: 'dist/icon.svg' },
+      ],
+      options: {},
+    },
     mini: {
       postcss: {
         pxtransform: { enable: true },

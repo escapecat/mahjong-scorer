@@ -17,6 +17,7 @@ export default function Index() {
     state, dispatch, total, expected,
     currentResult, winSuggestions, addTileToTarget, isTileDisabled,
     discardAnalysisInputs, fanPotentialInputs,
+    canUndo, canRedo,
   } = useCalculator();
 
   // Build meld entries for HandDisplay
@@ -65,6 +66,10 @@ export default function Index() {
           handCounts={state.handCounts}
           meldEntries={meldEntries}
           hasAnyMeld={hasAnyMeld}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={() => dispatch({ type: 'UNDO' })}
+          onRedo={() => dispatch({ type: 'REDO' })}
           onRemoveTile={(t) => dispatch({ type: 'REMOVE_HAND_TILE', tile: t })}
           onRemoveMeld={(meldType, index) => dispatch({ type: 'REMOVE_MELD', meldType: meldType as any, index })}
           onClear={() => dispatch({ type: 'CLEAR_ALL' })}

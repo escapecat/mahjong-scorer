@@ -1,0 +1,15 @@
+{
+  "name": "国标麻将算番器",
+  "short_name": "麻将算番",
+  "description": "国标麻将算番器——自动计算 81 个番种，听牌提示，番数潜力分析",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f6",
+  "theme_color": "#1a1a2e",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

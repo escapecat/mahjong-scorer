@@ -1,18 +1,23 @@
 import { useState, useMemo } from 'react';
-import { View, Image, Text } from '@tarojs/components';
+import { View, Image, Text, Input } from '@tarojs/components';
 import { ALL_FANS, FAN_CATEGORIES, parseExampleTiles } from '../../engine/fanData';
 import { tileIconPathByCode } from '../../engine/tileIcon';
 import { BottomNav } from '../../components/BottomNav';
 import styles from './index.module.css';
 
 export default function FanTable() {
-  const [selectedCategory, setSelectedCategory] = useState<number>(88);
+  const [selectedCategory, setSelectedCategory] = useState<number | 'all'>(88);
+  const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const filtered = useMemo(
-    () => ALL_FANS.filter(f => f.points === selectedCategory),
-    [selectedCategory]
-  );
+  const filtered = useMemo(() => {
+    let list = selectedCategory === 'all'
+      ? ALL_FANS
+      : ALL_FANS.filter(f => f.points === selectedCategory);
+    const q = search.trim();
+    if (q) list = list.filter(f => f.name.includes(q) || f.description.includes(q));
+    return list;
+  }, [selectedCategory, search]);
 
   function toggle(name: string) {
     const next = new Set(expanded);
@@ -25,16 +30,34 @@ export default function FanTable() {
     <View className={styles.container}>
       <View className={styles.content}>
         <View className={styles.filterBar}>
-          {FAN_CATEGORIES.map(c => (
+          <Input
+            className={styles.search}
+            type='text'
+            placeholder='搜索番种名称或描述…'
+            value={search}
+            onInput={(e) => setSearch(e.detail.value)}
+          />
+          <View className={styles.chipRow}>
             <View
-              key={c}
-              className={`${styles.chip} ${selectedCategory === c ? styles.active : ''}`}
-              onClick={() => { setSelectedCategory(c); setExpanded(new Set()); }}
+              className={`${styles.chip} ${selectedCategory === 'all' ? styles.active : ''}`}
+              onClick={() => { setSelectedCategory('all'); setExpanded(new Set()); }}
             >
-              <Text>{c}番</Text>
+              <Text>全部</Text>
             </View>
-          ))}
+            {FAN_CATEGORIES.map(c => (
+              <View
+                key={c}
+                className={`${styles.chip} ${selectedCategory === c ? styles.active : ''}`}
+                onClick={() => { setSelectedCategory(c); setExpanded(new Set()); }}
+              >
+                <Text>{c}番</Text>
+              </View>
+            ))}
+          </View>
         </View>
+        {filtered.length === 0 && (
+          <Text className={styles.empty}>没有匹配的番种</Text>
+        )}
 
         <View className={styles.list}>
           {filtered.map(fan => {

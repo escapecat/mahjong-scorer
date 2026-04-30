@@ -26,9 +26,27 @@ export function loadSessions(): SessionStore {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!parsed || typeof parsed !== 'object') return EMPTY_STORE;
     if (!Array.isArray(parsed.sessions)) return EMPTY_STORE;
-    return parsed as SessionStore;
+    // Defensive: drop any session that doesn't have a sane shape, so a single
+    // corrupt entry can't tank the whole page mount.
+    const validSessions = parsed.sessions.filter((s: any) =>
+      s && typeof s.id === 'string' && Array.isArray(s.players) && s.players.length === 4 && Array.isArray(s.rounds)
+    );
+    return {
+      activeSessionId: typeof parsed.activeSessionId === 'string' ? parsed.activeSessionId : null,
+      sessions: validSessions,
+    };
   } catch {
     return EMPTY_STORE;
+  }
+}
+
+/** Manual escape hatch: nuke all session data. Useful from the console
+ *  when storage gets into a weird state. Not wired to UI. */
+export function clearAllSessions(): void {
+  try {
+    Taro.removeStorageSync(STORAGE_KEY);
+  } catch {
+    /* ignore */
   }
 }
 

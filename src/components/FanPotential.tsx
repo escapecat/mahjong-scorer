@@ -61,44 +61,52 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
     const isAt14 = totalCount === expectedCount;
     const isAt13 = totalCount === expectedCount - 1;
 
-    if (isAt14) {
-      const discards = analyzeDiscards(allCounts, safeMelds, game);
-      let best: CurrentBest | null = null;
-      for (const d of discards) {
-        for (const w of d.winningTiles) {
-          if (!best || w.score > best.totalFan) {
-            best = {
-              totalFan: w.score,
-              description: `打 ${tileNameShort(d.discardTile)} 听 ${tileNameShort(w.tile)}`,
-              winTile: w.tile,
-              discardTile: d.discardTile,
-            };
+    try {
+      if (isAt14) {
+        const discards = analyzeDiscards(allCounts, safeMelds, game);
+        let best: CurrentBest | null = null;
+        for (const d of discards) {
+          for (const w of d.winningTiles) {
+            if (!best || w.score > best.totalFan) {
+              best = {
+                totalFan: w.score,
+                description: `打 ${tileNameShort(d.discardTile)} 听 ${tileNameShort(w.tile)}`,
+                winTile: w.tile,
+                discardTile: d.discardTile,
+              };
+            }
           }
         }
+        return best;
       }
-      return best;
-    }
-    if (isAt13) {
-      let best: CurrentBest | null = null;
-      const raw = [...allCounts.rawCounts()];
-      for (let i = 0; i < 34; i++) {
-        if (raw[i] >= 4) continue;
-        raw[i]++;
-        const test = TileSet.fromCounts(raw);
-        if (isWinningHandWithMelds(test, safeMelds)) {
-          const winTile = tileFromIndex(i);
-          const result = evaluate(test, safeMelds, { ...game, winningTile: winTile });
-          if (!best || result.totalFan > best.totalFan) {
-            best = {
-              totalFan: result.totalFan,
-              description: `听 ${tileNameShort(winTile)}`,
-              winTile,
-            };
+      if (isAt13) {
+        let best: CurrentBest | null = null;
+        const raw = [...allCounts.rawCounts()];
+        for (let i = 0; i < 34; i++) {
+          if (raw[i] >= 4) continue;
+          raw[i]++;
+          const test = TileSet.fromCounts(raw);
+          if (isWinningHandWithMelds(test, safeMelds)) {
+            const winTile = tileFromIndex(i);
+            try {
+              const result = evaluate(test, safeMelds, { ...game, winningTile: winTile });
+              if (!best || result.totalFan > best.totalFan) {
+                best = {
+                  totalFan: result.totalFan,
+                  description: `听 ${tileNameShort(winTile)}`,
+                  winTile,
+                };
+              }
+            } catch (e) {
+              // skip this winning tile if evaluation fails
+            }
           }
+          raw[i]--;
         }
-        raw[i]--;
+        return best;
       }
-      return best;
+    } catch (e) {
+      console.error('FanPotential currentBest failed:', e);
     }
     return null;
   }, [open, allCounts, lockedMelds, game, totalCount, expectedCount]);

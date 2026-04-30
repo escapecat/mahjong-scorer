@@ -57,11 +57,13 @@ export function analyzeDiscards(
       if (!isWinningHandWithMelds(test, safeMelds)) continue;
 
       const winTile = tileFromIndex(j);
-      const result: EvaluationResult = evaluate(
-        test,
-        safeMelds,
-        { ...game, winningTile: winTile },
-      );
+      let result: EvaluationResult;
+      try {
+        result = evaluate(test, safeMelds, { ...game, winningTile: winTile });
+      } catch (e) {
+        // Skip this winning-tile if evaluation throws (defensive — shouldn't happen)
+        continue;
+      }
 
       // Theoretical max remaining = 4 minus your own copies
       const remaining = Math.max(0, 4 - ownCopies);

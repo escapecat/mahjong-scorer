@@ -1,72 +1,194 @@
-# Feature Roadmap
+# 功能清单 (Feature Roadmap)
 
-Possible features to add, ranked by effort vs value.
-
----
-
-## 🟢 Quick wins (a few hours each)
-
-| # | Feature | Why useful |
-|---|---|---|
-| 1 | **Paste text → load hand** — input `123m456p789sEEE99p` to fill the calculator | Faster than tapping 14 tiles; copy hands from chats |
-| 2 | **Copy result as text** — "我和了 28番: 清一色 + 一色三同顺 + ..." | Share to WeChat / save as note |
-| 3 | **Hand history** — last 10 calculated hands, click to restore | Recover from accidental clear; compare hands |
-| 4 | **Sort hand tiles** — 万 then 筒 then 条 then 字 (currently random order) | Easier to read |
-| 5 | **Better empty state** — show example hands when calculator is empty | Helps new users |
+可以添加的功能，按工作量与价值排序。
 
 ---
 
-## 🟡 Medium effort, high value (1–2 days each)
+## 🟢 简单实现（每个几小时即可完成）
 
-| # | Feature | Why useful |
-|---|---|---|
-| 7 | **Practice mode (quiz)** — random hand → user guesses score → engine verifies | Biggest learning tool; differentiates from a plain calculator |
-| 8 | **Discard suggestions** — given 14 tiles, rank which to discard for best tenpai | Useful during play |
-| 9 | **Hand strength meter** — "Currently 23番. Discarding X gets you closer to 大四喜" | Gamifies improvement |
-| 10 | **Share as image** — render decomp + score to a PNG | Better than text for chat sharing |
-| 11 | **Tile shorthand input** — type `中中中` instead of clicking 3 dragon tiles | Faster honor input |
-| 12 | **Wait tile filter** — "show only winning tiles ≥ 8 番" | Focus on winnable hands |
+### 1. 文本快捷输入
+**做什么：** 在手牌区粘贴一串文本（比如 `123m456p789sEEE99p`），自动转换成 14 张牌加进手牌区。
+
+**为什么有用：** 现在每张牌都要点一下，14 张要点 14 次。如果朋友在微信里发了一手牌的文本，你想验证它的番数，复制粘贴比一张张点快得多。
+
+**实现方式：** 在主页加一个输入框，按"识别"自动解析。
 
 ---
 
-## 🟠 Bigger features (multiple days)
+### 2. 复制结果到剪贴板
+**做什么：** 点一个按钮，把当前的算番结果复制成文本，比如：
+```
+我和了！28番
+- 清一色 24番
+- 一色三同顺 24番
+- 平和 2番
+- 自摸 1番
+```
+然后可以直接粘贴到微信群里。
 
-| # | Feature | Why useful |
-|---|---|---|
-| 13 | **English / bilingual mode** — translate UI + 81 fan names | International audience |
-| 14 | **Tutorial / interactive guide** — "tap here to build 清龙 step by step" | Onboarding for beginners |
-| 15 | **Statistics dashboard** — "you've calculated 500 hands, average 12.3 番, highest 88 番" | Engagement |
-| 16 | **Game session tracking** — track multiple games' wins/losses across friends | For tournaments |
-| 17 | **Save / load named hands** — "my best hand", "tricky case from last week" | Reference library |
-
----
-
-## 🔵 Polish (small but pleasant)
-
-| # | Feature | Why useful |
-|---|---|---|
-| 18 | **Sound effects** — soft tile click + win celebration | Tactile feel |
-| 19 | **Dark mode toggle** | Personal preference |
-| 20 | **Larger tile mode** (accessibility) | Older users / poor vision |
-| 21 | **Keyboard shortcuts** — `M`/`P`/`S` + digits, Enter to calc | Power users |
+**为什么有用：** 算完牌想给牌友炫耀或者讨论时，截图太麻烦，直接复制文本最方便。
 
 ---
 
-## ❌ Considered but skipped
+### 3. 历史记录（最近 10 手）
+**做什么：** 在某个角落显示最近算过的 10 手牌，点一下可以恢复到那个状态。
 
-| Feature | Why skipped |
+**为什么有用：**
+- 不小心点了"清空"按钮，可以从历史里找回来
+- 可以对比"我刚才那手是 28 番，这手是 32 番"
+- 想再看一眼上一局的分解
+
+**实现方式：** 用浏览器的 localStorage 存最近 10 局。
+
+---
+
+### 4. 手牌排序
+**做什么：** 现在手牌按你点的顺序显示（可能是 9筒、3万、东风混在一起）。改成自动排序：万 → 筒 → 条 → 字。
+
+**为什么有用：** 排好序的手牌一眼能看出来缺什么、有几个对子，看起来舒服。
+
+---
+
+### 5. 空状态示例
+**做什么：** 当手牌区是空的时候，显示几个"示例手牌"按钮（比如"清一色范例"、"大四喜范例"），点一下自动加载。
+
+**为什么有用：** 新用户打开 app 不知道怎么用，看到示例就明白了。
+
+---
+
+## 🟡 中等工作量、价值高（每个 1-2 天）
+
+### 6. 高级练习模式（已有基础版，可扩展）
+**做什么：**
+- 难度分级（简单/中等/困难，按番数范围分）
+- 给提示（"已有 1 个一色三同顺，你还能找到什么？"）
+- 时间限制模式
+- 错题本（错过的题保存下来，可以重做）
+
+**为什么有用：** 现在的练习模式是混合难度，进阶玩家可能觉得太难或太简单。分级和复习能让学习更有针对性。
+
+---
+
+### 7. 出牌建议（打哪张最好）
+**做什么：** 你输入 14 张手牌，app 计算"打掉哪一张能让你最接近听牌"，并按好坏排序。
+
+**为什么有用：** 实战中拿了 14 张要打掉一张，到底打哪张？这是麻将里最高频的决策。app 帮你算最优解。
+
+**实现方式：** 对每一张可能打掉的牌，算听牌后能听几张牌，排序显示。
+
+---
+
+### 8. 番数潜力提示（"差一张就大番了"）
+**做什么：** 现在 app 显示"差 5 番起和"，扩展成：
+- "差 1 张牌就能凑齐大四喜（88 番）"
+- "如果再摸一张 5 万，可以凑成一色三同顺（24 番）"
+
+**为什么有用：** 帮助你看清"再坚持一下能起大番"还是"赶紧和小番算了"。
+
+---
+
+### 9. 把结果生成图片
+**做什么：** 把算番结果（手牌 + 分解 + 番种 + 总分）渲染成一张漂亮的图片，可以保存或分享。
+
+**为什么有用：** 比纯文本更醒目，适合发朋友圈、微信群炫耀战绩。
+
+---
+
+### 10. 字牌简写输入
+**做什么：** 现在加 3 个发字要点 3 次。改成"输入 `中中中` 就一下加 3 张"。
+
+**为什么有用：** 加刻子和杠子时省一半点击。
+
+---
+
+### 11. 听牌过滤
+**做什么：** 现在听牌区显示所有能和的牌。加一个筛选："只显示 8 番以上的"或"只显示和绝张"。
+
+**为什么有用：** 国标麻将必须 8 番起和，听不到 8 番的等于没听。过滤让你专注真正能赢的选项。
+
+---
+
+## 🟠 较大工作量（多天）
+
+### 12. 中英文双语
+**做什么：** 切换语言。所有 UI 文字 + 81 个番种名翻译成英文。
+
+**为什么有用：** 让国外朋友也能用，把国标麻将推广出去。
+
+**注意：** 番种翻译是文化挑战（"清一色"翻译成 "Pure Suit" 还是 "Flush"？），需要专门做术语表。
+
+---
+
+### 13. 互动新手教程
+**做什么：** 第一次打开 app 时，分步引导："先点这里加 1 万 → 再点这里加 2 万 → 现在你看见怎样形成顺子了..." 类似游戏关卡。
+
+**为什么有用：** 新手不懂规则的话，光看 81 个番种表会懵。互动教程边玩边学。
+
+---
+
+### 14. 数据统计仪表板
+**做什么：** 显示你的使用统计：
+- 总共算了多少手牌
+- 平均番数
+- 最高番数纪录
+- 最常出现的番种 Top 10
+- 练习模式正确率
+
+**为什么有用：** 让你看到自己的进步，有成就感。
+
+---
+
+### 15. 一局会话追踪
+**做什么：** 不只算单手牌，记录一整局四个人的输赢，自动算筹码。多局后看谁赢得最多。
+
+**为什么有用：** 朋友聚会打麻将时当记账工具。
+
+---
+
+### 16. 命名手牌存档
+**做什么：** 算完一手牌可以"保存为..."，给它起名字（"上次绝杀那手"），以后能从存档里调出来。
+
+**为什么有用：** 经典手牌可以做参考库，给朋友讲解时直接调出。
+
+---
+
+## 🔵 锦上添花（小但讨人喜欢）
+
+### 17. 音效
+轻柔的"嗒"一声（点牌）+ 起和的庆祝音。让操作更有手感。
+
+### 18. 暗黑模式
+切换深色主题。晚上看眼睛舒服。
+
+### 19. 大字模式（适老化）
+1.5 倍放大，方便老年人或视力不好的用户。
+
+### 20. 键盘快捷键
+桌面端用：按 M 选万子键盘，按 P 选饼子，输数字直接加牌。Power user 喜欢。
+
+---
+
+## ❌ 暂不考虑的功能
+
+| 功能 | 为什么不做 |
 |---|---|
-| **Tile photo OCR** | Needs ~10MB ML model (kills bundle size advantage) or paid OCR API. Real-world accuracy is poor without controlled lighting. |
-| **Cloud sync across devices** | Requires backend, accounts, login. Massive scope creep for a personal tool. |
-| **Multiplayer / online play** | Whole different app. |
-| **AI opponent** | Whole different app, requires game engine + AI. |
-| **Live game tracking (companion app)** | Niche use case, complex UI. |
-| **Tile counter (remaining in wall)** | App only sees your hand, not other players' discards. Without manually inputting discards, the count is misleading. The 4-tile cap is already enforced via disabled buttons. |
+| **拍照识别麻将牌（OCR）** | 需要 ~10MB 的 AI 模型（让 app 体积爆炸），或者用付费 OCR API。实拍照片识别率本来就不高（光线、角度问题），效果不会好。 |
+| **多设备云同步** | 需要后端服务器、账号系统。对于一个个人小工具来说太复杂了。 |
+| **联机对战 / 多人游戏** | 完全是另一个 app 的范畴。 |
+| **AI 对手** | 需要游戏引擎 + AI 算法，工作量巨大。 |
+| **实时游戏陪伴模式** | 用例太小众，UI 设计复杂。 |
+| **场上剩余牌数统计** | App 只能看到你的手牌，无法知道别人打了什么。除非手动输入对方弃牌（操作太麻烦），否则数字误导性强。当前已有"4 张限制"的灰显已经够了。 |
 
 ---
 
-## Recommended order for next iteration
+## 推荐优先级
 
-1. **#1, #2, #3** (text input + copy result + hand history) — half a day total, dramatically improves usability
-2. **#7 (practice mode)** — the standout feature that makes this app a learning tool, not just a calculator
-3. Everything else only when users ask for it
+如果只挑几个做：
+
+1. **先做 1, 2, 3**（文本输入 + 复制结果 + 历史记录）
+   半天工作量，但用户体验飞跃。
+
+2. **再做 6**（练习模式增强）
+   现有练习模式扩展难度分级和错题本，把它做扎实。
+
+3. **其他都先放着**，等用户反馈再决定。

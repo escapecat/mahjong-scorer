@@ -56,6 +56,34 @@
   font-weight: 700;
   margin-left: 2px;
 }
+.modeSwitch {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.modeChip {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 10px;
+}
+.modeChipActive {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.9));
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+}
+.streakBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 4px;
+}
 
 .gameInfo {
   display: flex;
@@ -158,6 +186,56 @@
   border-color: rgba(239, 68, 68, 0.5);
 }
 .notSelected {
+  opacity: 0.5;
+}
+.fanCountChoices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.fanCountChoice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+}
+.choiceLetter {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2563eb;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 50%;
+}
+.choiceValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.candidateTiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.candidateTile {
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
+}
+.disabledBtn {
   opacity: 0.5;
 }
 

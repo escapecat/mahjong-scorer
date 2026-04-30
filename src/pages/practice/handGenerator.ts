@@ -2,14 +2,36 @@ import { TileSet } from '../../engine/models/tileSet';
 import { tileFromIndex, type Tile, Tiles } from '../../engine/models/tile';
 import { createGameContext, type GameContext, type EvaluationResult } from '../../engine/models/types';
 import { evaluate } from '../../engine/evaluator';
+import { isWinningHand } from '../../engine/decomposer';
 import { ALL_FANS } from '../../engine/fanData';
 
-export interface PracticeQuestion {
-  counts: TileSet;            // 14 tiles forming a winning hand
+export interface FanPickQuestion {
+  kind: 'fanPick';
+  counts: TileSet;
   game: GameContext;
   result: EvaluationResult;
-  options: FanOption[];        // Multiple choice options
+  options: FanOption[];
   correctFanNames: Set<string>;
+}
+
+export interface FanCountQuestion {
+  kind: 'fanCount';
+  counts: TileSet;
+  game: GameContext;
+  result: EvaluationResult;
+  choices: number[];
+  correctIndex: number;
+}
+
+export interface WaitTileQuestion {
+  kind: 'waitTile';
+  /** 13 tiles in tenpai */
+  counts: TileSet;
+  game: Omit<GameContext, 'winningTile'>;
+  /** All valid winning tile indices */
+  correctTileIndices: Set<number>;
+  /** Candidate tiles (correct + distractors) shown to user */
+  candidateTiles: Tile[];
 }
 
 export interface FanOption {
@@ -29,18 +51,14 @@ function pickRandomWind(): Tile {
 }
 
 /**
- * Generate a random valid 14-tile winning hand by building backwards:
- * pick a pair, then 4 melds (random sequences/triplets), respecting tile-count limits.
+ * Generate a random valid 14-tile winning hand by build-backwards approach.
  */
 function generateValidHand(): TileSet | null {
   for (let attempt = 0; attempt < 200; attempt++) {
     const counts = new Array(34).fill(0);
-
-    // Pick a pair
     const pairIdx = randInt(34);
     counts[pairIdx] = 2;
 
-    // Build 4 melds
     let melds = 0;
     let inner = 0;
     while (melds < 4 && inner < 50) {
@@ -48,7 +66,6 @@ function generateValidHand(): TileSet | null {
       const isSequence = Math.random() < 0.6;
 
       if (isSequence) {
-        // Random suit (0-2) + rank (0-6) for valid sequence
         const suit = randInt(3);
         const rank = randInt(7);
         const start = suit * 9 + rank;
@@ -59,7 +76,6 @@ function generateValidHand(): TileSet | null {
           melds++;
         }
       } else {
-        // Triplet — any of 34 tiles
         const idx = randInt(34);
         if (counts[idx] + 3 <= 4) {
           counts[idx] += 3;
@@ -75,9 +91,7 @@ function generateValidHand(): TileSet | null {
   return null;
 }
 
-/** Generate a random game context */
 function generateGameContext(counts: TileSet): GameContext {
-  // Pick a random tile from the hand as the winning tile
   const tiles: Tile[] = [];
   for (let i = 0; i < 34; i++) {
     for (let j = 0; j < counts.getByIndex(i); j++) {
@@ -99,15 +113,14 @@ function generateGameContext(counts: TileSet): GameContext {
   });
 }
 
-/** Pick distractor fans — plausible-looking but wrong answers */
-function pickDistractors(correctFanNames: Set<string>, count: number): string[] {
-  const allNames = ALL_FANS.map(f => f.name).filter(n => !correctFanNames.has(n));
-  const shuffled = [...allNames].sort(() => Math.random() - 0.5);
+function pickDistractors(correctNames: Set<string>, count: number): string[] {
+  const names = ALL_FANS.map(f => f.name).filter(n => !correctNames.has(n));
+  const shuffled = [...names].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
 
-/** Generate a complete practice question */
-export function generateQuestion(): PracticeQuestion | null {
+// ── Mode C: Pick fans ──
+export function generateFanPickQuestion(): FanPickQuestion | null {
   for (let attempt = 0; attempt < 20; attempt++) {
     const counts = generateValidHand();
     if (!counts) continue;
@@ -116,17 +129,12 @@ export function generateQuestion(): PracticeQuestion | null {
     const result = evaluate(counts, [], game);
     if (result.totalFan === 0) continue;
 
-    // Filter fans: only include named fans (not 花牌 which has dynamic name)
     const correctFans = result.fans
       .filter(f => !f.name.startsWith('花牌'))
       .filter(f => ALL_FAN_DATA.has(f.name));
-
     if (correctFans.length === 0) continue;
 
-    // Deduplicate (e.g., 幺九刻 might appear multiple times)
     const correctFanNames = new Set(correctFans.map(f => f.name));
-
-    // Build options: correct fans + 4 distractors
     const distractors = pickDistractors(correctFanNames, 4);
     const optionNames = [...correctFanNames, ...distractors];
 
@@ -141,7 +149,105 @@ export function generateQuestion(): PracticeQuestion | null {
       })
       .sort(() => Math.random() - 0.5);
 
-    return { counts, game, result, options, correctFanNames };
+    return { kind: 'fanPick', counts, game, result, options, correctFanNames };
+  }
+  return null;
+}
+
+// ── Mode A: Guess fan count ──
+export function generateFanCountQuestion(): FanCountQuestion | null {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const counts = generateValidHand();
+    if (!counts) continue;
+
+    const game = generateGameContext(counts);
+    const result = evaluate(counts, [], game);
+    if (result.totalFan === 0) continue;
+
+    const correct = result.totalFan;
+    // Generate 3 plausible distractors: off by ±2~10
+    const distractors = new Set<number>();
+    while (distractors.size < 3) {
+      const offset = (randInt(8) + 2) * (Math.random() < 0.5 ? -1 : 1);
+      const v = correct + offset;
+      if (v > 0 && v !== correct && !distractors.has(v)) {
+        distractors.add(v);
+      }
+    }
+    const choices = [...distractors, correct].sort(() => Math.random() - 0.5);
+    const correctIndex = choices.indexOf(correct);
+
+    return { kind: 'fanCount', counts, game, result, choices, correctIndex };
+  }
+  return null;
+}
+
+// ── Mode B: Guess winning tile ──
+export function generateWaitTileQuestion(): WaitTileQuestion | null {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const fullCounts = generateValidHand();
+    if (!fullCounts) continue;
+
+    // Pick a random tile to remove → 13-tile tenpai
+    const tilesInHand: number[] = [];
+    for (let i = 0; i < 34; i++) {
+      for (let j = 0; j < fullCounts.getByIndex(i); j++) {
+        tilesInHand.push(i);
+      }
+    }
+    const removeIdx = tilesInHand[randInt(tilesInHand.length)];
+
+    const tenpaiCounts = fullCounts.clone();
+    tenpaiCounts.remove(tileFromIndex(removeIdx));
+
+    // Find ALL valid winning tiles
+    const correctTileIndices = new Set<number>();
+    const raw = [...tenpaiCounts.rawCounts()];
+    for (let i = 0; i < 34; i++) {
+      if (raw[i] >= 4) continue;
+      raw[i]++;
+      if (isWinningHand(TileSet.fromCounts(raw))) {
+        correctTileIndices.add(i);
+      }
+      raw[i]--;
+    }
+
+    if (correctTileIndices.size === 0) continue;
+
+    // Pick distractors: tiles that are NOT valid waits
+    const distractors: number[] = [];
+    const tries = new Set<number>();
+    while (distractors.length < 4 && tries.size < 34) {
+      const idx = randInt(34);
+      if (tries.has(idx)) continue;
+      tries.add(idx);
+      if (correctTileIndices.has(idx)) continue;
+      distractors.push(idx);
+    }
+
+    const candidateIndices = [...correctTileIndices, ...distractors].sort(() => Math.random() - 0.5);
+    const candidateTiles = candidateIndices.map(i => tileFromIndex(i));
+
+    const game: Omit<GameContext, 'winningTile'> = {
+      isSelfDraw: Math.random() < 0.6,
+      seatWind: pickRandomWind(),
+      roundWind: pickRandomWind(),
+      flowerCount: 0,
+      isLastTile: false,
+      isKongDraw: false,
+      isRobbingKong: false,
+      isWinningTileLast: false,
+      mingKongCount: 0,
+      anKongCount: 0,
+      chiCount: 0,
+      pengCount: 0,
+      kongCount: 0,
+      hasOpenMeld: false,
+      totalMeldCount: 0,
+      totalOpenMeldCount: 0,
+    };
+
+    return { kind: 'waitTile', counts: tenpaiCounts, game, correctTileIndices, candidateTiles };
   }
   return null;
 }

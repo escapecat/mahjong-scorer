@@ -11,7 +11,7 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(circle at top, #dde7f3 0%, #c5d3e6 50%, #a8bbd4 100%);
+  background: radial-gradient(circle at top, #f7f9fc 0%, #eef1f6 45%, #e6ebf2 100%);
   pointer-events: none;
 }
 #app, .taro_router, .taro_page {

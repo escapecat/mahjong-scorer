@@ -22,10 +22,11 @@ interface Props {
 
 interface CurrentBest {
   totalFan: number;
-  description: string;  // e.g., "听 9p" or "打 8m 听 7m"
+  description: string;     // e.g., "听 9p" or "打 8m 听 7m"
   winTile?: Tile;
   discardTile?: Tile;
-  waitCount?: number;   // # of unique winning tiles for this discard
+  waitCount?: number;      // # of distinct winning tile *types* (e.g. 3 for 1m/4m/7m)
+  totalRemaining?: number; // theoretical max # of total tiles (4 - own copies) summed
 }
 
 interface CurrentBests {
@@ -101,6 +102,7 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
               winTile: w.tile,
               discardTile: top.discardTile,
               waitCount: top.uniqueWaitCount,
+              totalRemaining: top.totalRemaining,
             };
           }
         }
@@ -116,6 +118,7 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
                 winTile: w.tile,
                 discardTile: d.discardTile,
                 waitCount: d.uniqueWaitCount,
+                totalRemaining: d.totalRemaining,
               };
             }
           }
@@ -126,6 +129,7 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
       if (isAt13) {
         let best: CurrentBest | null = null;
         let waitCount = 0;
+        let totalRemaining = 0;
         const raw = [...allCounts.rawCounts()];
         for (let i = 0; i < 34; i++) {
           if (raw[i] >= 4) continue;
@@ -133,6 +137,9 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
           const test = TileSet.fromCounts(raw);
           if (isWinningHandWithMelds(test, safeMelds)) {
             waitCount++;
+            // remaining in wall/opponents = 4 - own pre-draw copies. raw[i] was
+            // just incremented to simulate the draw, so pre-draw count = raw[i]-1.
+            totalRemaining += Math.max(0, 4 - (raw[i] - 1));
             const winTile = tileFromIndex(i);
             try {
               const result = evaluate(test, safeMelds, { ...game, winningTile: winTile });
@@ -141,7 +148,8 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
                   totalFan: result.totalFan,
                   description: `听 ${tileNameShort(winTile)}`,
                   winTile,
-                  waitCount: 0, // filled below
+                  waitCount: 0,        // filled below
+                  totalRemaining: 0,   // filled below
                 };
               }
             } catch (e) {
@@ -150,7 +158,10 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
           }
           raw[i]--;
         }
-        if (best) best.waitCount = waitCount;
+        if (best) {
+          best.waitCount = waitCount;
+          best.totalRemaining = totalRemaining;
+        }
         return { stable: best, ambitious: best }; // same in 13-tile mode
       }
     } catch (e) {
@@ -180,7 +191,9 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
               <Text className={styles.currentBestLabel}>📌 当前最优</Text>
               <Text className={styles.currentBestText}>
                 {currentBests.stable.description}
-                {currentBests.stable.waitCount && currentBests.stable.waitCount > 0 ? ` / ${currentBests.stable.waitCount} 听` : ''}
+                {currentBests.stable.waitCount && currentBests.stable.waitCount > 0
+                  ? ` / 听 ${currentBests.stable.waitCount} 种(共 ${currentBests.stable.totalRemaining ?? 0} 张)`
+                  : ''}
               </Text>
               <Text className={styles.currentBestFan}>{currentBests.stable.totalFan}番</Text>
             </View>
@@ -189,7 +202,7 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
             <View className={`${styles.currentBest} ${styles.currentBestStable}`}>
               <Text className={styles.currentBestLabel}>🛡️ 稳</Text>
               <Text className={styles.currentBestText}>
-                {currentBests.stable.description} / {currentBests.stable.waitCount} 听
+                {currentBests.stable.description} / 听 {currentBests.stable.waitCount} 种(共 {currentBests.stable.totalRemaining} 张)
               </Text>
               <Text className={styles.currentBestFan}>{currentBests.stable.totalFan}番</Text>
             </View>
@@ -198,7 +211,7 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
             <View className={`${styles.currentBest} ${styles.currentBestAmbitious}`}>
               <Text className={styles.currentBestLabel}>🚀 冲</Text>
               <Text className={styles.currentBestText}>
-                {currentBests.ambitious.description} / {currentBests.ambitious.waitCount} 听
+                {currentBests.ambitious.description} / 听 {currentBests.ambitious.waitCount} 种(共 {currentBests.ambitious.totalRemaining} 张)
               </Text>
               <Text className={styles.currentBestFan}>{currentBests.ambitious.totalFan}番</Text>
             </View>

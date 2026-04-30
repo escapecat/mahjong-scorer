@@ -3,7 +3,7 @@
  *  - Cache-first for hashed static assets (js/css/images/fonts), since their URLs change on rebuild.
  *  - Stale cache is purged when CACHE_VERSION bumps.
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `mahjong-scorer-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {

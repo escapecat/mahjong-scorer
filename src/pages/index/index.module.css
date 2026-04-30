@@ -7,6 +7,9 @@
   margin: 0 auto;
   background: transparent;
   overflow: hidden;
+  /* iOS PWA standalone: status bar / home indicator overlap content. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .display {
   flex: 1;

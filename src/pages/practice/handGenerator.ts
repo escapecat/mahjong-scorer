@@ -113,10 +113,54 @@ function generateGameContext(counts: TileSet): GameContext {
   });
 }
 
-function pickDistractors(correctNames: Set<string>, count: number): string[] {
-  const names = ALL_FANS.map(f => f.name).filter(n => !correctNames.has(n));
-  const shuffled = [...names].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+/**
+ * Pick distractor fans. Biased toward "expected" fans based on game context
+ * so the options include fans the user might naturally guess (e.g. 自摸 when
+ * self-draw, even if it's suppressed by 不求人).
+ */
+function pickDistractors(
+  correctNames: Set<string>,
+  game: GameContext,
+  counts: TileSet,
+  count: number,
+): string[] {
+  const expected: string[] = [];
+
+  // Situational fans the user would expect to see based on game context
+  if (game.isSelfDraw) expected.push('自摸');
+  if (!game.hasOpenMeld) expected.push('门前清');
+  if (game.flowerCount > 0) expected.push('花牌');
+  if (game.isLastTile) expected.push(game.isSelfDraw ? '妙手回春' : '海底捞月');
+
+  // Tile-property fans the user would expect based on hand
+  if (counts.hasNoHonors()) expected.push('无字');
+  if (counts.suitsPresent() === 1 && !counts.hasHonors()) expected.push('清一色');
+  if (counts.suitsPresent() === 1 && counts.hasHonors()) expected.push('混一色');
+  if (counts.isAllSimples()) expected.push('断幺');
+  if (counts.suitsPresent() < 3 && counts.suitsPresent() > 0) expected.push('缺一门');
+
+  // Filter expected to those NOT already in correct
+  const expectedDistractors = expected.filter(n => !correctNames.has(n));
+
+  const distractors = new Set<string>();
+  for (const n of expectedDistractors.sort(() => Math.random() - 0.5)) {
+    if (distractors.size >= count) break;
+    distractors.add(n);
+  }
+
+  // Fill remaining with random fans
+  if (distractors.size < count) {
+    const remaining = ALL_FANS
+      .map(f => f.name)
+      .filter(n => !correctNames.has(n) && !distractors.has(n))
+      .sort(() => Math.random() - 0.5);
+    for (const n of remaining) {
+      if (distractors.size >= count) break;
+      distractors.add(n);
+    }
+  }
+
+  return [...distractors];
 }
 
 // ── Mode C: Pick fans ──
@@ -135,7 +179,7 @@ export function generateFanPickQuestion(): FanPickQuestion | null {
     if (correctFans.length === 0) continue;
 
     const correctFanNames = new Set(correctFans.map(f => f.name));
-    const distractors = pickDistractors(correctFanNames, 4);
+    const distractors = pickDistractors(correctFanNames, game, counts, 4);
     const optionNames = [...correctFanNames, ...distractors];
 
     const options: FanOption[] = optionNames

@@ -22,4 +22,12 @@ body::before {
 #app, .taro_router, .taro_page {
   background: transparent !important;
 }
-* { box-sizing: border-box; }
+/* H5 uses universal `*` for the global box-sizing reset (set inline in src/index.html).
+ * Weapp's WXSS base lib 3.15+ rejects bare `*`, so we list weapp components explicitly here.
+ * H5 ignores these (they don't match real DOM), no harm. */
+view, scroll-view, swiper, swiper-item, cover-view, cover-image,
+text, button, input, textarea, image, navigator,
+movable-area, movable-view, picker, picker-view, picker-view-column,
+checkbox, checkbox-group, radio, radio-group, slider, switch, label, form {
+  box-sizing: border-box;
+}

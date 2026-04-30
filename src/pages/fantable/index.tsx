@@ -55,8 +55,10 @@ export default function FanTable() {
     setExpanded(next);
   }
 
+  const containerStyle = process.env.TARO_ENV !== 'h5' ? { maxWidth: 'none' } : undefined;
+
   return (
-    <View className={styles.container}>
+    <View className={styles.container} style={containerStyle}>
       <View className={styles.content}>
         <View className={styles.filterBar}>
           <Input

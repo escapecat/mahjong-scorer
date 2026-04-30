@@ -53,6 +53,26 @@
   border-radius: 8px;
   flex-wrap: wrap;
 }
+.currentBestStable {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(37, 99, 235, 0.4);
+}
+.currentBestStable .currentBestLabel {
+  color: #2563eb;
+}
+.currentBestStable .currentBestFan {
+  color: #2563eb;
+}
+.currentBestAmbitious {
+  background: rgba(244, 114, 182, 0.12);
+  border-color: rgba(236, 72, 153, 0.4);
+}
+.currentBestAmbitious .currentBestLabel {
+  color: #db2777;
+}
+.currentBestAmbitious .currentBestFan {
+  color: #db2777;
+}
 .currentBestLabel {
   font-size: 11px;
   font-weight: 700;

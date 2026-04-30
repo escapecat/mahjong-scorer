@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist-weapp/",
   "projectname": "国标麻将算番器",
   "description": "国标麻将算番器小程序版",
-  "appid": "touristappid",
+  "appid": "wx46d8514ee0c041e9",
   "setting": {
     "urlCheck": false,
     "es6": false,
@@ -10,9 +10,33 @@
     "postcss": false,
     "minified": false,
     "newFeature": true,
-    "ignoreUploadUnusedFiles": true
+    "ignoreUploadUnusedFiles": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "compileType": "miniprogram",
   "libVersion": "3.0.0",
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

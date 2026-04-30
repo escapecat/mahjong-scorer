@@ -17,8 +17,10 @@ const MODE_LABELS: Record<Mode, string> = {
 export default function Practice() {
   const [mode, setMode] = useState<Mode>('fanCount');
 
+  const containerStyle = process.env.TARO_ENV !== 'h5' ? { maxWidth: 'none' } : undefined;
+
   return (
-    <View className={styles.container}>
+    <View className={styles.container} style={containerStyle}>
       <View className={styles.content}>
         <View className={styles.header}>
           <View className={styles.title}>
@@ -40,13 +42,13 @@ export default function Practice() {
         </View>
 
         {/* All three modes stay mounted so switching tabs preserves the current question */}
-        <View style={{ display: mode === 'fanCount' ? 'block' : 'none' }}>
+        <View className={mode === 'fanCount' ? styles.modeWrapper : styles.modeHidden}>
           <FanCountMode />
         </View>
-        <View style={{ display: mode === 'waitTile' ? 'block' : 'none' }}>
+        <View className={mode === 'waitTile' ? styles.modeWrapper : styles.modeHidden}>
           <WaitTileMode />
         </View>
-        <View style={{ display: mode === 'fanPick' ? 'block' : 'none' }}>
+        <View className={mode === 'fanPick' ? styles.modeWrapper : styles.modeHidden}>
           <FanPickMode />
         </View>
       </View>

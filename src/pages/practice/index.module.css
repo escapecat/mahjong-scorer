@@ -80,6 +80,17 @@
   color: #fff;
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
 }
+/* Wrap each mode's <Fragment> contents with flex+gap so child blocks don't
+ * collide visually. The default `display: block` previously stacked them
+ * with zero spacing, so the .result panel could overlap the .options grid. */
+.modeWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modeHidden {
+  display: none;
+}
 .streakBar {
   display: flex;
   justify-content: flex-end;

@@ -70,8 +70,13 @@ export default function Index() {
 
   const hasAnyMeld = meldEntries.length > 0;
 
+  // weapp pxtransform converts the CSS `max-width: 560px` (a desktop-only
+  // constraint) into `560rpx` ≈ 290pt, leaving the app stranded in a narrow
+  // column on phones. Override inline so weapp uses the full screen width.
+  const appStyle = process.env.TARO_ENV !== 'h5' ? { maxWidth: 'none' } : undefined;
+
   return (
-    <View className={styles.app}>
+    <View className={styles.app} style={appStyle}>
       <View className={styles.display}>
         <ScoreBar
           result={currentResult}

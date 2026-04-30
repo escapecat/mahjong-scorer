@@ -1,8 +1,8 @@
 import { type Tile, tileToCode } from './models/tile';
 
-// Base path: empty string for dev (resolves relative to /), or '/mahjong-scorer'
-// for Gitee Pages subpath deploy. Set via build-time env var.
-const BASE = (typeof process !== 'undefined' && process.env && process.env.TARO_APP_BASE_URL) || '';
+// Base path: empty string for dev/Netlify (root), or '/mahjong-scorer' for GitHub Pages
+// subpath deploy. Replaced at build time by webpack DefinePlugin via Taro's defineConstants.
+const BASE: string = process.env.TARO_APP_BASE_URL || '';
 
 const CODE_TO_FILE: Record<string, string> = {
   E: `${BASE}/tiles/F1.png`, S: `${BASE}/tiles/F2.png`, W: `${BASE}/tiles/F3.png`, N: `${BASE}/tiles/F4.png`,

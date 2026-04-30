@@ -114,19 +114,8 @@ export function FanPickMode() {
           } else if (isSel) {
             cls = `${styles.option} ${styles.selected}`;
           }
-          // What to show in the checkbox: ✓ if selected/correctSelected/wrongSelected,
-          // ! if missed correct answer, empty otherwise
-          let checkContent = '';
-          if (submitted) {
-            if (opt.isCorrect && isSel) checkContent = '✓';
-            else if (opt.isCorrect && !isSel) checkContent = '!';
-            else if (!opt.isCorrect && isSel) checkContent = '✕';
-          } else if (isSel) {
-            checkContent = '✓';
-          }
           return (
             <View key={opt.name} className={cls} onClick={() => toggle(opt.name)}>
-              <View className={styles.optCheck}><Text>{checkContent}</Text></View>
               <Text className={styles.optName}>{opt.name}</Text>
               <Text className={styles.optPts}>{opt.points} 番</Text>
             </View>

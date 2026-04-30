@@ -181,27 +181,13 @@
 .option {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.82);
   border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 10px;
   font-size: 13px;
-}
-.optCheck {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  border-radius: 4px;
-  border: 2px solid #94a3b8;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: #fff;
-  font-weight: 800;
 }
 .optName {
   flex: 1;
@@ -216,11 +202,6 @@
 .selected {
   background: rgba(37, 99, 235, 0.2);
   border-color: #2563eb;
-}
-.selected .optCheck {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
 }
 .selected .optName {
   color: #1e40af;
@@ -303,8 +284,8 @@
   box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
 }
 .candidateTile.selected {
-  background: rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.5);
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
 }
 .candidateTile.correctSelected {
   background: rgba(74, 222, 128, 0.2);

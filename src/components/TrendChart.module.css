@@ -12,6 +12,8 @@
   width: 100%;
   height: auto;
   display: block;
+  /* Image with mode='widthFix' will compute height; provide a sensible default */
+  min-height: 180px;
 }
 .legend {
   display: flex;

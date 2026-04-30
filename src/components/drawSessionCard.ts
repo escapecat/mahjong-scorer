@@ -55,6 +55,20 @@ function roundedRectPath(ctx: any, x: number, y: number, w: number, h: number, r
   ctx.closePath();
 }
 
+/** Truncate text with an ellipsis if it would exceed maxWidth in the
+ *  current ctx font. Some weapp Canvas2D measureText returns 0 for empty
+ *  fonts, but for normal use this is reliable. */
+function fitText(ctx: any, text: string, maxWidth: number): string {
+  if (!text) return '';
+  if (typeof ctx.measureText !== 'function') return text;
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let cut = text;
+  while (cut.length > 0 && ctx.measureText(cut + '…').width > maxWidth) {
+    cut = cut.slice(0, -1);
+  }
+  return cut + '…';
+}
+
 function niceUp(v: number): number {
   if (v <= 1) return 1;
   const mag = Math.pow(10, Math.floor(Math.log10(v)));
@@ -176,13 +190,13 @@ function drawTrendLegend(
     ctx.arc(cellX + 8, cy, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // name + delta in same row
+    // name + delta in same row, clipped to cell width
     ctx.fillStyle = COLORS.text;
     ctx.textAlign = 'left';
     const score = totals[seat];
     const scoreStr = score >= 0 ? `+${score}` : String(score);
     const fullText = `${session.players[seat]} ${scoreStr}`;
-    ctx.fillText(fullText, cellX + 18, cy);
+    ctx.fillText(fitText(ctx, fullText, cellW - 22), cellX + 18, cy);
   }
 }
 
@@ -259,13 +273,15 @@ export function drawSessionCard(ctx: any, session: Session): { width: number; he
     ctx.font = 'bold 14px sans-serif';
     ctx.fillText(SEAT_LABELS[seat], PAD + 56, cy);
 
-    // Player name
+    // Player name (clipped if too long for the available space)
+    const score = totals[seat];
     ctx.fillStyle = COLORS.text;
     ctx.font = 'bold 18px sans-serif';
-    ctx.fillText(session.players[seat], PAD + 80, cy);
+    // Reserve ~84px on the right for the score, ~80px on the left for medal/seat
+    const nameMaxWidth = W - 2 * PAD - 80 - 84;
+    ctx.fillText(fitText(ctx, session.players[seat], nameMaxWidth), PAD + 80, cy);
 
     // Score (right)
-    const score = totals[seat];
     ctx.fillStyle = score > 0 ? COLORS.pos : score < 0 ? COLORS.neg : COLORS.zero;
     ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'right';

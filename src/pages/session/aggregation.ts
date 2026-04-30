@@ -54,62 +54,6 @@ export function aggregateByPlayer(sessions: readonly Session[], range: TimeRange
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
-// ── CSV export ──
-
-/** Quote a CSV cell if needed (commas, quotes, newlines). */
-function csvCell(v: string | number): string {
-  const s = String(v);
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
-
-function isoDate(ts: number): string {
-  const d = new Date(ts);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-/**
- * One row per round. Columns:
- * 局号, 时间, 第几把, 类型, 赢家, 出冲方, 番数, 底分, [4 个玩家 deltas]
- *
- * Header includes the 4 player names per session, but since sessions can have
- * different names we just label "东得分/南得分/西得分/北得分" plus a "玩家(东/南/西/北)" summary column.
- */
-export function sessionsToCSV(sessions: readonly Session[]): string {
-  const lines: string[] = [];
-  lines.push(['局号', '时间', '第几把', '类型', '赢家', '出冲方', '番数', '底分', '东', '南', '西', '北', '东得分', '南得分', '西得分', '北得分'].map(csvCell).join(','));
-
-  for (let si = 0; si < sessions.length; si++) {
-    const s = sessions[si];
-    if (s.rounds.length === 0) {
-      // include empty session as a single header-only row so it's not lost
-      lines.push([si + 1, isoDate(s.startTime), '', '', '', '', '', s.baseScore, ...s.players, '', '', '', ''].map(csvCell).join(','));
-      continue;
-    }
-    s.rounds.forEach((r, idx) => {
-      const d = computeRoundDeltas(r);
-      const winner = r.winnerSeat != null ? `${SEAT_LABELS[r.winnerSeat]}/${s.players[r.winnerSeat]}` : '';
-      const discarder = r.discarderSeat != null ? `${SEAT_LABELS[r.discarderSeat]}/${s.players[r.discarderSeat]}` : '';
-      const typeLabel = r.type === 'selfDraw' ? '自摸' : r.type === 'discard' ? '点炮' : '黄庄';
-      lines.push([
-        si + 1,
-        isoDate(r.timestamp),
-        idx + 1,
-        typeLabel,
-        winner,
-        discarder,
-        r.fan ?? '',
-        s.baseScore,
-        s.players[0], s.players[1], s.players[2], s.players[3],
-        d[0], d[1], d[2], d[3],
-      ].map(csvCell).join(','));
-    });
-  }
-
-  return lines.join('\n');
-}
-
 // ── Per-round running totals (for trend chart) ──
 
 export interface RunningPoint {

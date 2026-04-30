@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateByPlayer, sessionsToCSV, buildRunningTotals, rangeStart } from '../../pages/session/aggregation';
+import { aggregateByPlayer, buildRunningTotals, rangeStart } from '../../pages/session/aggregation';
 import type { Session } from '../../pages/session/sessionStorage';
 import type { Round } from '../scoring';
 
@@ -64,36 +64,6 @@ describe('aggregateByPlayer', () => {
     expect(agg[0].name).toBe('A');
     expect(agg[0].total).toBe(48);
     expect(agg[1].total).toBe(-16);
-  });
-});
-
-describe('sessionsToCSV', () => {
-  it('emits header + one row per round', () => {
-    const s = mkSession({
-      rounds: [
-        mkRound({ id: 'r1', type: 'selfDraw', winnerSeat: 0, fan: 8, baseScore: 8 }),
-        mkRound({ id: 'r2', type: 'discard', winnerSeat: 1, discarderSeat: 3, fan: 12, baseScore: 8 }),
-      ],
-    });
-    const csv = sessionsToCSV([s]);
-    const lines = csv.split('\n');
-    expect(lines.length).toBe(3); // header + 2 rounds
-    expect(lines[0]).toContain('局号');
-    expect(lines[0]).toContain('番数');
-    expect(lines[1]).toContain('自摸');
-    expect(lines[2]).toContain('点炮');
-  });
-
-  it('quotes cells with commas', () => {
-    const s = mkSession({ players: ['a,b', 'c', 'd', 'e'], rounds: [mkRound({ type: 'draw' })] });
-    const csv = sessionsToCSV([s]);
-    expect(csv).toContain('"a,b"');
-  });
-
-  it('preserves empty sessions', () => {
-    const csv = sessionsToCSV([mkSession({})]);
-    const lines = csv.split('\n');
-    expect(lines.length).toBe(2); // header + 1 empty-session row
   });
 });
 

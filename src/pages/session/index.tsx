@@ -52,6 +52,7 @@ export default function SessionPage() {
   const [showEntry, setShowEntry] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [aggRange, setAggRange] = useState<TimeRange>('week');
+  const [showAllArchived, setShowAllArchived] = useState(false);
 
   // persist on every store change
   useEffect(() => {
@@ -331,6 +332,7 @@ export default function SessionPage() {
                   type='text'
                   value={setupNames[i]}
                   placeholder={SEAT_LABELS[i]}
+                  maxlength={10}
                   onInput={(e) => {
                     const next = [...setupNames] as [string, string, string, string];
                     next[i] = e.detail.value;
@@ -484,7 +486,7 @@ export default function SessionPage() {
         {archivedSessions.length > 0 && (
           <View className={styles.archiveSection}>
             <Text className={styles.archiveTitle}>📚 历史 ({archivedSessions.length} 局)</Text>
-            {archivedSessions.slice(0, 10).map((s) => {
+            {(showAllArchived ? archivedSessions : archivedSessions.slice(0, 10)).map((s) => {
               const sumD = sumRoundDeltas(s.rounds);
               return (
                 <View key={s.id} className={styles.archiveRow}>
@@ -507,6 +509,13 @@ export default function SessionPage() {
                 </View>
               );
             })}
+            {archivedSessions.length > 10 && (
+              <View className={styles.showMoreBtn} onClick={() => setShowAllArchived((v) => !v)}>
+                <Text>
+                  {showAllArchived ? '▲ 收起' : `▼ 显示更多 (${archivedSessions.length - 10} 局)`}
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>

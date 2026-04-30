@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react';
 import { View, Text } from '@tarojs/components';
 import { TileSet } from '../engine/models/tileSet';
-import { tileFromIndex, type Tile, tileEquals } from '../engine/models/tile';
+import { tileFromIndex, type Tile } from '../engine/models/tile';
 import type { Meld } from '../engine/models/meld';
 import type { GameContext } from '../engine/models/types';
 import { calculateFanPotential, type FanPotential as FanPotentialItem } from '../engine/fanPotential';
 import { isWinningHandWithMelds } from '../engine/decomposer';
 import { evaluate } from '../engine/evaluator';
 import { analyzeDiscards } from '../engine/discardAnalyzer';
-import { tileIconPath } from '../engine/tileIcon';
 import styles from './FanPotential.module.css';
 
 interface Props {
@@ -117,9 +116,8 @@ export function FanPotential({ allCounts, lockedMelds, game, totalCount, expecte
           {currentBest && (
             <View className={styles.currentBest}>
               <Text className={styles.currentBestLabel}>📌 当前最优</Text>
-              <Text className={styles.currentBestText}>
-                {currentBest.description} — <Text className={styles.currentBestFan}>{currentBest.totalFan}番</Text>
-              </Text>
+              <Text className={styles.currentBestText}>{currentBest.description}</Text>
+              <Text className={styles.currentBestFan}>{currentBest.totalFan}番</Text>
             </View>
           )}
           <View className={styles.note}>

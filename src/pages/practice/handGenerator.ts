@@ -139,6 +139,39 @@ function pickDistractors(
   if (counts.isAllSimples()) expected.push('断幺');
   if (counts.suitsPresent() < 3 && counts.suitsPresent() > 0) expected.push('缺一门');
 
+  // Triplet/kong-related fans the user might guess
+  const raw = counts.rawCounts();
+  let tripletCount = 0;
+  let dragonTripletCount = 0;
+  let windTripletCount = 0;
+  let terminalOrHonorTriplet = false;
+  let fourOfKindCount = 0;
+  for (let i = 0; i < 34; i++) {
+    if (raw[i] === 4) fourOfKindCount++;
+    if (raw[i] >= 3) {
+      tripletCount++;
+      if (i >= 31) dragonTripletCount++;
+      if (i >= 27 && i <= 30) windTripletCount++;
+      const rank = i % 9;
+      if (i >= 27 || rank === 0 || rank === 8) terminalOrHonorTriplet = true;
+    }
+  }
+  if (tripletCount >= 4) expected.push('碰碰和');
+  if (dragonTripletCount >= 1) expected.push('箭刻');
+  if (dragonTripletCount >= 2) expected.push('双箭刻');
+  if (windTripletCount >= 3) expected.push('三风刻');
+  if (terminalOrHonorTriplet) expected.push('幺九刻');
+  if (fourOfKindCount >= 1) expected.push('四归一');
+
+  // Wind triplet matching seat/round
+  const seatIdx = 27 + game.seatWind.rank;
+  const roundIdx = 27 + game.roundWind.rank;
+  if (raw[seatIdx] >= 3) expected.push('门风刻');
+  if (raw[roundIdx] >= 3) expected.push('圈风刻');
+
+  // Wait-type fans
+  if (game.winningTile) expected.push('单钓将', '边张', '坎张');
+
   // Filter expected to those NOT already in correct
   const expectedDistractors = expected.filter(n => !correctNames.has(n));
 

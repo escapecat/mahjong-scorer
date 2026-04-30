@@ -9,6 +9,7 @@ import { TileKeyboard } from '../../components/TileKeyboard';
 import { BottomNav } from '../../components/BottomNav';
 import { DiscardSuggestion } from '../../components/DiscardSuggestion';
 import { FanPotential } from '../../components/FanPotential';
+import { subtractMelds } from '../../engine/decomposer';
 import styles from './index.module.css';
 
 export default function Index() {
@@ -69,12 +70,15 @@ export default function Index() {
           onClear={() => dispatch({ type: 'CLEAR_ALL' })}
         />
 
-        {currentResult && (
+        {currentResult && discardAnalysisInputs && (
           <ResultDisplay
             result={currentResult}
             winningTile={state.winningTile}
             expandedFanName={state.expandedFanName}
             onExpandFan={(name) => dispatch({ type: 'EXPAND_FAN', name })}
+            handCounts={subtractMelds(discardAnalysisInputs.allCounts, discardAnalysisInputs.melds)}
+            lockedMelds={discardAnalysisInputs.melds}
+            game={discardAnalysisInputs.game}
           />
         )}
 

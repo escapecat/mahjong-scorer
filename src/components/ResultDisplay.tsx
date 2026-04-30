@@ -1,8 +1,11 @@
 import { View, Image, Text } from '@tarojs/components';
-import type { EvaluationResult } from '../engine/models/types';
+import type { EvaluationResult, GameContext } from '../engine/models/types';
 import type { Tile } from '../engine/models/tile';
 import { tileEquals } from '../engine/models/tile';
+import type { Meld } from '../engine/models/meld';
+import { TileSet } from '../engine/models/tileSet';
 import { tileIconPath } from '../engine/tileIcon';
+import { ShareButton } from './ShareButton';
 import styles from './ResultDisplay.module.css';
 
 interface Props {
@@ -10,9 +13,13 @@ interface Props {
   winningTile: Tile | null;
   expandedFanName: string | null;
   onExpandFan: (name: string | null) => void;
+  // For share image generation
+  handCounts: TileSet;
+  lockedMelds: readonly Meld[];
+  game: GameContext;
 }
 
-export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFan }: Props) {
+export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFan, handCounts, lockedMelds, game }: Props) {
   // Render decomposition tile groups
   const renderGroups = () => {
     if (!result.tileGroups || result.tileGroups.length === 0) return null;
@@ -61,6 +68,9 @@ export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFa
           <Text>{expandedFan.description}</Text>
         </View>
       )}
+      <View className={styles.shareWrap}>
+        <ShareButton result={result} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
+      </View>
     </View>
   );
 }

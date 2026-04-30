@@ -79,3 +79,8 @@
   color: #475569;
   line-height: 1.5;
 }
+.shareWrap {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0;
+}

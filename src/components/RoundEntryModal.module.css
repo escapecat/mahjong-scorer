@@ -1,9 +1,14 @@
 .modal {
   position: fixed;
-  inset: 0;
+  /* Weapp WXSS 3.x doesn't recognize the `inset` shorthand, so anchor with the
+   * individual properties instead — without these the modal has no anchor and
+   * the click area is wherever its parent would put it. */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
   height: 100vh;
-  height: 100dvh;
   background: rgba(15, 23, 42, 0.7);
   display: flex;
   align-items: center;
@@ -11,7 +16,6 @@
   z-index: 99999;
   padding: 20px;
   padding-bottom: max(20px, env(safe-area-inset-bottom));
-  isolation: isolate;
   box-sizing: border-box;
 }
 .modalInner {

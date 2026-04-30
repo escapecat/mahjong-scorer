@@ -15,7 +15,11 @@
 
 .modal {
   position: fixed;
-  inset: 0;
+  /* explicit anchors — weapp WXSS 3.x doesn't parse the `inset` shorthand */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
   /* dvh covers the URL bar correctly on mobile; vh fallback for older browsers */
   height: 100vh;

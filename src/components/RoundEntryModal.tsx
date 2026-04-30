@@ -106,7 +106,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
 
         {type === 'discard' && (
           <View className={styles.formRow}>
-            <Text className={styles.formLabel}>出冲</Text>
+            <Text className={styles.formLabel}>谁打的(点炮方)</Text>
             <View className={styles.seatRow}>
               {[0, 1, 2, 3].map((s) =>
                 seatBtn(s, discarderSeat === s, () => s !== winnerSeat && setDiscarderSeat(s))

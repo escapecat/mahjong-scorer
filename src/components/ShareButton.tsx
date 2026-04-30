@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { View, Text } from '@tarojs/components';
 import html2canvas from 'html2canvas';
@@ -18,13 +18,22 @@ interface Props {
 export function ShareButton({ result, handCounts, lockedMelds, game }: Props) {
   const [showPreview, setShowPreview] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [generating, setGenerating] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Revoke blob URL when it changes / component unmounts to free memory
+  useEffect(() => {
+    return () => {
+      if (imageUrl && imageUrl.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
+    };
+  }, [imageUrl]);
 
   async function generate() {
     setShowPreview(true);
     setGenerating(true);
     setImageUrl(null);
+    setImageBlob(null);
 
     // Wait for the ShareCard to render
     await new Promise<void>(r => setTimeout(r, 100));
@@ -42,13 +51,46 @@ export function ShareButton({ result, handCounts, lockedMelds, game }: Props) {
         logging: false,
         useCORS: true,
       });
-      const dataUrl = canvas.toDataURL('image/png');
-      setImageUrl(dataUrl);
+      // Use a Blob URL instead of a base64 data URL: the long-press
+      // "Save Image" menu on mobile Safari/Chrome is much more reliable
+      // with blob: URLs than with multi-hundred-KB data: URLs.
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png')
+      );
+      if (!blob) throw new Error('canvas.toBlob returned null');
+      setImageBlob(blob);
+      setImageUrl(URL.createObjectURL(blob));
     } catch (e) {
       console.error('html2canvas failed:', e);
     } finally {
       setGenerating(false);
     }
+  }
+
+  const canWebShare =
+    typeof navigator !== 'undefined' &&
+    typeof (navigator as any).canShare === 'function' &&
+    typeof (navigator as any).share === 'function';
+
+  async function shareImage() {
+    if (!imageBlob) return;
+    const file = new File(
+      [imageBlob],
+      `mahjong-${result.totalFan}fan-${Date.now()}.png`,
+      { type: 'image/png' }
+    );
+    if (canWebShare && (navigator as any).canShare({ files: [file] })) {
+      try {
+        await (navigator as any).share({
+          files: [file],
+          title: `${result.totalFan}番`,
+        });
+        return;
+      } catch (e) {
+        // User cancelled, or share failed — fall through to download.
+      }
+    }
+    downloadImage();
   }
 
   function downloadImage() {
@@ -62,6 +104,7 @@ export function ShareButton({ result, handCounts, lockedMelds, game }: Props) {
   function close() {
     setShowPreview(false);
     setImageUrl(null);
+    setImageBlob(null);
   }
 
   const modal = showPreview ? (
@@ -89,10 +132,20 @@ export function ShareButton({ result, handCounts, lockedMelds, game }: Props) {
           <>
             <img className={styles.previewImg} src={imageUrl} alt='share' />
             <View className={styles.actions}>
-              <View className={styles.downloadBtn} onClick={downloadImage}>
-                <Text>下载图片</Text>
-              </View>
-              <Text className={styles.hint}>长按图片可以保存或转发到微信</Text>
+              {canWebShare ? (
+                <View className={styles.downloadBtn} onClick={shareImage}>
+                  <Text>📤 保存 / 分享</Text>
+                </View>
+              ) : (
+                <View className={styles.downloadBtn} onClick={downloadImage}>
+                  <Text>⬇ 下载图片</Text>
+                </View>
+              )}
+              <Text className={styles.hint}>
+                {canWebShare
+                  ? '点上方按钮调出系统分享面板（"保存到相册"/微信 等）'
+                  : '长按图片即可"存到相册"或转发到微信'}
+              </Text>
             </View>
           </>
         )}

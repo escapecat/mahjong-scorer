@@ -9,6 +9,10 @@ export default {
   h5: {
     publicPath: PUBLIC_PATH,
     staticDirectory: 'static',
+    router: {
+      mode: 'hash',
+      basename: PUBLIC_PATH,
+    },
     enableExtract: true,
     miniCssExtractPluginOption: {
       filename: 'css/[name].[hash].css',

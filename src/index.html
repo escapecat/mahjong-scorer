@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>国标麻将算番器</title>
+  <script>
+    // Ensure root URL loads the index page (Taro hash router doesn't auto-redirect on first load)
+    if (!window.location.hash) {
+      window.location.replace(window.location.pathname + '#/pages/index/index');
+    }
+  </script>
 </head>
 <body>
   <div id="app"></div>

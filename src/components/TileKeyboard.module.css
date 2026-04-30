@@ -1,26 +1,26 @@
 .keyboard {
   flex-shrink: 0;
   background: rgba(241, 245, 249, 0.96);
-  border-top: 2rpx solid rgba(226, 232, 240, 0.7);
-  border-radius: 28rpx 28rpx 0 0;
-  padding: 8rpx 12rpx 4rpx;
-  box-shadow: 0 -12rpx 36rpx rgba(15, 23, 42, 0.06);
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 14px 14px 0 0;
+  padding: 4px 6px 2px;
+  box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.06);
 }
 .targets {
   display: flex;
-  gap: 6rpx;
-  margin-bottom: 8rpx;
+  gap: 3px;
+  margin-bottom: 3px;
 }
 .targetBtn {
   flex: 1;
   background: rgba(255, 255, 255, 0.8);
   color: #475569;
-  padding: 12rpx 0;
-  border-radius: 16rpx;
-  font-size: 22rpx;
+  padding: 5px 0;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 600;
   text-align: center;
-  box-shadow: 4rpx 4rpx 12rpx rgba(148, 163, 184, 0.15);
+  box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
 }
 .active {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.9));
@@ -29,12 +29,12 @@
 .rows {
   display: flex;
   flex-direction: column;
-  gap: 6rpx;
+  gap: 3px;
 }
 .row {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 6rpx;
+  gap: 3px;
 }
 .row:last-child {
   grid-template-columns: repeat(7, 1fr);
@@ -44,15 +44,15 @@
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.92);
-  border-radius: 16rpx;
-  padding: 8rpx 0;
-  min-height: 84rpx;
-  box-shadow: 4rpx 4rpx 12rpx rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  padding: 4px 0;
+  min-height: 42px;
+  box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
 }
 .disabled {
   opacity: 0.3;
 }
 .tileImg {
-  height: 64rpx;
-  width: 48rpx;
+  height: 32px;
+  width: 24px;
 }

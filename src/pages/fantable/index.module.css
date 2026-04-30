@@ -9,7 +9,7 @@
 }
 .content {
   flex: 1;
-  padding: 12rpx 16rpx;
+  padding: 6px 8px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
@@ -20,8 +20,8 @@
 .filterBar {
   display: flex;
   flex-wrap: wrap;
-  gap: 8rpx;
-  padding: 12rpx 0 16rpx 0;
+  gap: 4px;
+  padding: 4px 0 8px 0;
   position: sticky;
   top: 0;
   background: rgba(247, 249, 252, 0.95);
@@ -30,28 +30,27 @@
 .chip {
   background: rgba(255, 255, 255, 0.75);
   color: #475569;
-  padding: 8rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
   font-weight: 600;
-  box-shadow: 4rpx 4rpx 12rpx rgba(148, 163, 184, 0.18), -4rpx -4rpx 12rpx rgba(255, 255, 255, 0.8);
+  box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
 }
 .active {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.9));
   color: #fff;
-  box-shadow: 0 12rpx 28rpx rgba(37, 99, 235, 0.2);
 }
 .list {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 6px;
 }
 .item {
   background: rgba(255, 255, 255, 0.82);
-  border-radius: 20rpx;
-  padding: 20rpx 24rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
-  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.18), -8rpx -8rpx 24rpx rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 4px 4px 12px rgba(148, 163, 184, 0.18);
 }
 .expanded {
   background: rgba(255, 255, 255, 0.95);
@@ -59,39 +58,39 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 8px;
 }
 .name {
   flex: 1;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: #1e293b;
 }
 .pts {
-  font-size: 24rpx;
+  font-size: 12px;
   font-weight: 700;
   color: #2563eb;
-  background: rgba(37, 99, 235, 0.1);
-  padding: 4rpx 16rpx;
-  border-radius: 999rpx;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 .detail {
-  margin-top: 16rpx;
-  padding-top: 16rpx;
-  border-top: 2rpx dashed #e2e8f0;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
 }
 .desc {
-  font-size: 24rpx;
+  font-size: 13px;
   color: #64748b;
   line-height: 1.6;
 }
 .example {
   display: flex;
   flex-wrap: wrap;
-  gap: 4rpx;
-  margin-top: 12rpx;
+  gap: 3px;
+  margin-top: 6px;
 }
 .tileImg {
-  height: 56rpx;
-  width: 42rpx;
+  height: 28px;
+  width: 21px;
 }

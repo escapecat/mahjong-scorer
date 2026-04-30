@@ -1,74 +1,75 @@
 .bar {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.82);
-  border-radius: 24rpx;
-  padding: 12rpx 16rpx;
-  min-height: 80rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
-  box-shadow: 12rpx 12rpx 32rpx rgba(148, 163, 184, 0.2), -12rpx -12rpx 32rpx rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 6px 8px;
+  min-height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 6px 6px 16px rgba(148, 163, 184, 0.2), -6px -6px 16px rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
 }
 .tiles {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
-  gap: 6rpx;
+  gap: 3px;
   align-items: center;
   overflow: hidden;
 }
 .handTile {
   background: none;
-  padding: 2rpx;
-  border-radius: 8rpx;
+  padding: 1px;
+  border-radius: 4px;
   line-height: 0;
 }
 .tileImg {
-  height: 56rpx;
-  width: 42rpx;
+  height: 28px;
+  width: 21px;
 }
 .tileImgSm {
-  height: 56rpx;
-  width: 42rpx;
+  height: 28px;
+  width: 21px;
 }
 .sep {
   color: #cbd5e1;
-  font-size: 36rpx;
-  margin: 0 4rpx;
+  font-size: 18px;
+  margin: 0 2px;
 }
 .meld {
   display: inline-flex;
   align-items: center;
-  gap: 2rpx;
+  gap: 1px;
   background: rgba(241, 245, 249, 0.9);
-  border-radius: 12rpx;
-  padding: 4rpx 8rpx;
+  border-radius: 6px;
+  padding: 2px 4px;
   position: relative;
   line-height: 0;
 }
 .meldTag {
   position: absolute;
-  bottom: -4rpx;
-  right: -4rpx;
-  font-size: 16rpx;
+  bottom: -2px;
+  right: -2px;
+  font-size: 8px;
   background: #2563eb;
   color: #fff;
-  padding: 0 6rpx;
-  border-radius: 8rpx;
+  padding: 0 3px;
+  border-radius: 4px;
   line-height: 1.4;
   font-weight: 700;
 }
 .placeholder {
-  font-size: 22rpx;
+  font-size: 11px;
   color: #94a3b8;
 }
 .clearBtn {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
-  width: 56rpx;
-  height: 56rpx;
-  border-radius: 16rpx;
-  font-size: 28rpx;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 700;
   display: flex;
   align-items: center;

@@ -35,6 +35,7 @@ export default defineConfig(async (merge) => {
       staticDirectory: 'static',
       postcss: {
         autoprefixer: { enable: true },
+        pxtransform: { enable: false },
         cssModules: {
           enable: true,
           config: {

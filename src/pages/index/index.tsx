@@ -94,7 +94,13 @@ export default function Index() {
         )}
 
         {fanPotentialInputs && (
-          <FanPotential allCounts={fanPotentialInputs.allCounts} />
+          <FanPotential
+            allCounts={fanPotentialInputs.allCounts}
+            lockedMelds={fanPotentialInputs.melds}
+            game={fanPotentialInputs.game}
+            totalCount={fanPotentialInputs.totalCount}
+            expectedCount={fanPotentialInputs.expectedCount}
+          />
         )}
       </View>
 

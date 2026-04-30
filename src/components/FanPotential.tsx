@@ -1,11 +1,31 @@
 import { useState, useMemo } from 'react';
 import { View, Text } from '@tarojs/components';
 import { TileSet } from '../engine/models/tileSet';
+import { tileFromIndex, type Tile, tileEquals } from '../engine/models/tile';
+import type { Meld } from '../engine/models/meld';
+import type { GameContext } from '../engine/models/types';
 import { calculateFanPotential, type FanPotential as FanPotentialItem } from '../engine/fanPotential';
+import { isWinningHandWithMelds } from '../engine/decomposer';
+import { evaluate } from '../engine/evaluator';
+import { analyzeDiscards } from '../engine/discardAnalyzer';
+import { tileIconPath } from '../engine/tileIcon';
 import styles from './FanPotential.module.css';
 
 interface Props {
   allCounts: TileSet;
+  lockedMelds: readonly Meld[];
+  game: GameContext;
+  /** Total tile count (13 = tenpai, 14 = need to discard) */
+  totalCount: number;
+  /** Expected count (14 + kongs typically) */
+  expectedCount: number;
+}
+
+interface CurrentBest {
+  totalFan: number;
+  description: string;  // e.g., "听 9p (88番)" or "打 8m 听 7m (17番)"
+  winTile?: Tile;
+  discardTile?: Tile;
 }
 
 const MAX_DISTANCE_TO_SHOW = 6;
@@ -18,7 +38,14 @@ function rankMedal(idx: number): string {
   return '🔹';
 }
 
-export function FanPotential({ allCounts }: Props) {
+function tileNameShort(t: Tile): string {
+  if (t.suit === 'wind') return ['东', '南', '西', '北'][t.rank];
+  if (t.suit === 'dragon') return ['中', '发', '白'][t.rank];
+  const suit = t.suit === 'man' ? '万' : t.suit === 'pin' ? '筒' : '条';
+  return `${t.rank + 1}${suit}`;
+}
+
+export function FanPotential({ allCounts, lockedMelds, game, totalCount, expectedCount }: Props) {
   const [open, setOpen] = useState(false);
 
   const items = useMemo<FanPotentialItem[]>(() => {
@@ -27,6 +54,56 @@ export function FanPotential({ allCounts }: Props) {
       .filter(p => p.distance > 0 && p.distance <= MAX_DISTANCE_TO_SHOW)
       .slice(0, MAX_ITEMS);
   }, [open, allCounts]);
+
+  // Compute "current best achievable" — what's the max 番 you can get right now?
+  const currentBest = useMemo<CurrentBest | null>(() => {
+    if (!open) return null;
+    const isAt14 = totalCount === expectedCount;
+    const isAt13 = totalCount === expectedCount - 1;
+
+    if (isAt14) {
+      // For each discard, find the best winning tile + score
+      const discards = analyzeDiscards(allCounts, lockedMelds, game);
+      let best: CurrentBest | null = null;
+      for (const d of discards) {
+        for (const w of d.winningTiles) {
+          if (!best || w.score > best.totalFan) {
+            best = {
+              totalFan: w.score,
+              description: `打 ${tileNameShort(d.discardTile)} 听 ${tileNameShort(w.tile)}`,
+              winTile: w.tile,
+              discardTile: d.discardTile,
+            };
+          }
+        }
+      }
+      return best;
+    }
+    if (isAt13) {
+      // For each potential winning tile, evaluate
+      let best: CurrentBest | null = null;
+      const raw = [...allCounts.rawCounts()];
+      for (let i = 0; i < 34; i++) {
+        if (raw[i] >= 4) continue;
+        raw[i]++;
+        const test = TileSet.fromCounts(raw);
+        if (isWinningHandWithMelds(test, [...lockedMelds])) {
+          const winTile = tileFromIndex(i);
+          const result = evaluate(test, [...lockedMelds], { ...game, winningTile: winTile });
+          if (!best || result.totalFan > best.totalFan) {
+            best = {
+              totalFan: result.totalFan,
+              description: `听 ${tileNameShort(winTile)}`,
+              winTile,
+            };
+          }
+        }
+        raw[i]--;
+      }
+      return best;
+    }
+    return null;
+  }, [open, allCounts, lockedMelds, game, totalCount, expectedCount]);
 
   return (
     <View className={open ? styles.container : styles.containerCollapsed}>
@@ -37,8 +114,16 @@ export function FanPotential({ allCounts }: Props) {
 
       {open && (
         <>
+          {currentBest && (
+            <View className={styles.currentBest}>
+              <Text className={styles.currentBestLabel}>📌 当前最优</Text>
+              <Text className={styles.currentBestText}>
+                {currentBest.description} — <Text className={styles.currentBestFan}>{currentBest.totalFan}番</Text>
+              </Text>
+            </View>
+          )}
           <View className={styles.note}>
-            <Text>各大番种距离当前手牌差几张（仅显示距离 ≤ {MAX_DISTANCE_TO_SHOW}）</Text>
+            <Text>下面列出可凑齐的高番种距离，对比上方"当前最优"决定追不追</Text>
           </View>
 
           <View className={styles.list}>

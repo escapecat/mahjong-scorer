@@ -126,7 +126,7 @@ export function FanPickMode() {
           }
           return (
             <View key={opt.name} className={cls} onClick={() => toggle(opt.name)}>
-              <Text className={styles.optCheck}>{checkContent}</Text>
+              <View className={styles.optCheck}><Text>{checkContent}</Text></View>
               <Text className={styles.optName}>{opt.name}</Text>
               <Text className={styles.optPts}>{opt.points} 番</Text>
             </View>

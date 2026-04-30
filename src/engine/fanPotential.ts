@@ -389,12 +389,87 @@ function computeQuanXiao(c: TileSet): FanPotential | null {
   return { fanName: '全小', points: 24, distance: nonSmall, description: `去掉 ${nonSmall} 张非 1/2/3 牌` };
 }
 
+// ── 32番 ──
+
+function computeYiSeSiBuGao(c: TileSet): FanPotential | null {
+  // 4 stepped sequences in one suit (step 1 or 2)
+  let best = Infinity;
+  for (const base of SUIT_BASE) {
+    // Step 1: starts 0..3
+    for (let start = 0; start <= 3; start++) {
+      const t = new Array(34).fill(0);
+      for (let s = start; s < start + 4; s++) {
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      best = Math.min(best, distanceTo(c, t));
+    }
+    // Step 2: only start 0 fits
+    {
+      const t = new Array(34).fill(0);
+      for (const s of [0, 2, 4, 6]) {
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      best = Math.min(best, distanceTo(c, t));
+    }
+  }
+  if (best === 0 || best >= 14) return null;
+  return { fanName: '一色四步高', points: 32, distance: best, description: '同花色 4 副阶梯顺子' };
+}
+
 // ── 16番 ──
 
+function computeYiSeSanBuGao(c: TileSet): FanPotential | null {
+  // 3 stepped sequences in one suit (step 1 or 2)
+  let best = Infinity;
+  for (const base of SUIT_BASE) {
+    // Step 1: starts 0..4
+    for (let start = 0; start <= 4; start++) {
+      const t = new Array(34).fill(0);
+      for (let s = start; s < start + 3; s++) {
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      best = Math.min(best, distanceTo(c, t));
+    }
+    // Step 2: starts 0..2
+    for (let start = 0; start <= 2; start++) {
+      const t = new Array(34).fill(0);
+      for (const offset of [0, 2, 4]) {
+        const s = start + offset;
+        t[base + s] += 1;
+        t[base + s + 1] += 1;
+        t[base + s + 2] += 1;
+      }
+      best = Math.min(best, distanceTo(c, t));
+    }
+  }
+  if (best === 0 || best >= 14) return null;
+  return { fanName: '一色三步高', points: 16, distance: best, description: '同花色 3 副阶梯顺子' };
+}
+
+function computeQuanDaiWu(c: TileSet): FanPotential | null {
+  // Approximation: all tiles in ranks 2-6 + at least 6 fives
+  let bad = 0;
+  let fives = 0;
+  for (let i = 0; i < 34; i++) {
+    if (i >= 27) { bad += c.getByIndex(i); continue; }
+    const r = i % 9;
+    if (r < 2 || r > 6) bad += c.getByIndex(i);
+    if (r === 4) fives += c.getByIndex(i);
+  }
+  const minFiveSwaps = Math.max(0, 6 - fives);
+  const dist = Math.max(bad, minFiveSwaps);
+  if (dist === 0 || dist >= 14) return null;
+  return { fanName: '全带五', points: 16, distance: dist, description: '每副面子+将都含 5（粗略估计）' };
+}
+
 function computeQingLong(c: TileSet): FanPotential | null {
-  // 123 + 456 + 789 in one suit. Need 3 of each suit position 0-8 actually.
-  // Wait, just 1 each for positions 0-8 in the suit (forming 3 sequences).
-  // Plus 5 more tiles for the meld + pair (any).
+  // 123 + 456 + 789 in one suit
   let best = Infinity;
   let bestSuit = -1;
   for (let s = 0; s < 3; s++) {
@@ -561,12 +636,12 @@ export function calculateFanPotential(allCounts: TileSet): FanPotential[] {
     // 48
     computeYiSeSiTongShun, computeYiSeSiJieGao,
     // 32
-    computeHunYaoJiu,
+    computeYiSeSiBuGao, computeHunYaoJiu,
     // 24
     computeQiDui, computeQiXingBuKao, computeQuanShuangKe, computeQingYiSe,
     computeYiSeSanTongShun, computeYiSeSanJieGao, computeQuanDa, computeQuanZhong, computeQuanXiao,
     // 16
-    computeQingLong, computeSanSeShuangLongHui, computeSanTongKe,
+    computeYiSeSanBuGao, computeQuanDaiWu, computeQingLong, computeSanSeShuangLongHui, computeSanTongKe,
     // 12
     computeQuanBuKao, computeDaYuWu, computeXiaoYuWu,
     // 8

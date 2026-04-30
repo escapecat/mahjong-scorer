@@ -3,6 +3,9 @@ import devConfig from './dev';
 import prodConfig from './prod';
 
 export default defineConfig(async (merge) => {
+  const isH5 = process.env.TARO_ENV === 'h5';
+  const outputRoot = isH5 ? 'dist' : 'dist-weapp';
+
   const baseConfig = {
     projectName: 'MahjongScorer2',
     date: '2026-04-30',
@@ -14,18 +17,21 @@ export default defineConfig(async (merge) => {
       828: 1.81 / 2,
     },
     sourceRoot: 'src',
-    outputRoot: 'dist',
+    outputRoot,
     plugins: ['@tarojs/plugin-framework-react'],
     framework: 'react',
     compiler: 'webpack5',
-    copy: {
-      patterns: [
-        { from: 'src/manifest.webmanifest', to: 'dist/manifest.webmanifest' },
-        { from: 'src/sw.js', to: 'dist/sw.js' },
-        { from: 'src/icon.svg', to: 'dist/icon.svg' },
-      ],
-      options: {},
-    },
+    // PWA assets only matter for the H5 build — weapp has its own packaging.
+    ...(isH5 ? {
+      copy: {
+        patterns: [
+          { from: 'src/manifest.webmanifest', to: 'dist/manifest.webmanifest' },
+          { from: 'src/sw.js', to: 'dist/sw.js' },
+          { from: 'src/icon.svg', to: 'dist/icon.svg' },
+        ],
+        options: {},
+      },
+    } : {}),
     mini: {
       postcss: {
         pxtransform: { enable: true },

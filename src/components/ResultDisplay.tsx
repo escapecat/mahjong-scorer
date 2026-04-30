@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Image, Text } from '@tarojs/components';
+import Taro from '@tarojs/taro';
 import type { EvaluationResult, GameContext } from '../engine/models/types';
 import type { Tile } from '../engine/models/tile';
 import { tileEquals } from '../engine/models/tile';
@@ -98,11 +99,21 @@ export function ResultDisplay({ result, winningTile, expandedFanName, onExpandFa
       {expandedFan && (
         <View className={styles.reason}>
           <Text>{expandedFan.description}</Text>
+          <View
+            className={styles.fanLink}
+            onClick={() => Taro.navigateTo({
+              url: `/pages/fantable/index?fan=${encodeURIComponent(expandedFan.name)}`,
+            })}
+          >
+            <Text>📋 番表查看「{expandedFan.name}」 →</Text>
+          </View>
         </View>
       )}
-      <View className={styles.shareWrap}>
-        <ShareButton result={display} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
-      </View>
+      {process.env.TARO_ENV === 'h5' && (
+        <View className={styles.shareWrap}>
+          <ShareButton result={display} handCounts={handCounts} lockedMelds={lockedMelds} game={game} />
+        </View>
+      )}
     </View>
   );
 }

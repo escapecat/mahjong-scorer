@@ -6,6 +6,11 @@ html, body, page {
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
 }
+/* Weapp doesn't have a body element; use the `page` root instead. */
+page {
+  background: radial-gradient(circle at top, #f7f9fc 0%, #eef1f6 45%, #e6ebf2 100%);
+}
+/* H5: a fixed pseudo-element layer sits behind everything (taro_router can't be overridden inline). */
 body::before {
   content: "";
   position: fixed;

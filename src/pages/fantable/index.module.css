@@ -78,6 +78,15 @@
 .expanded {
   background: rgba(255, 255, 255, 0.95);
 }
+.highlight {
+  animation: fan-flash 2.4s ease-out;
+  border-color: rgba(234, 179, 8, 0.7);
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.5), 4px 4px 16px rgba(234, 179, 8, 0.25);
+}
+@keyframes fan-flash {
+  0% { background: rgba(254, 243, 199, 0.95); }
+  100% { background: rgba(255, 255, 255, 0.95); }
+}
 .header {
   display: flex;
   align-items: center;

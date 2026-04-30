@@ -1,0 +1,18 @@
+{
+  "miniprogramRoot": "dist-weapp/",
+  "projectname": "国标麻将算番器",
+  "description": "国标麻将算番器小程序版",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": false,
+    "es6": false,
+    "enhance": false,
+    "postcss": false,
+    "minified": false,
+    "newFeature": true,
+    "ignoreUploadUnusedFiles": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "condition": {}
+}

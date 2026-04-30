@@ -7,6 +7,9 @@ node_modules/
 .taro-cache/
 .taro_cache/
 
+# weapp build (not committed — open dist-weapp/ in WeChat DevTools to preview)
+dist-weapp/
+
 # misc
 .DS_Store
 .env.local

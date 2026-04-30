@@ -1,14 +1,43 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { View, Image, Text, Input } from '@tarojs/components';
+import { useRouter } from '@tarojs/taro';
 import { ALL_FANS, FAN_CATEGORIES, parseExampleTiles } from '../../engine/fanData';
 import { tileIconPathByCode } from '../../engine/tileIcon';
 import { BottomNav } from '../../components/BottomNav';
 import styles from './index.module.css';
 
 export default function FanTable() {
-  const [selectedCategory, setSelectedCategory] = useState<number | 'all'>(88);
+  const router = useRouter();
+  const targetFan = router.params.fan
+    ? decodeURIComponent(router.params.fan)
+    : null;
+
+  const [selectedCategory, setSelectedCategory] = useState<number | 'all'>(() => {
+    if (targetFan) {
+      const found = ALL_FANS.find((f) => f.name === targetFan);
+      if (found) return found.points;
+    }
+    return 88;
+  });
   const [search, setSearch] = useState('');
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(() =>
+    targetFan ? new Set([targetFan]) : new Set()
+  );
+  const [highlightFan, setHighlightFan] = useState<string | null>(targetFan);
+
+  // Scroll target fan into view + flash highlight (H5 only — weapp uses its own
+  // selector query API and the auto-expand alone is enough there).
+  useEffect(() => {
+    if (!targetFan) return;
+    if (process.env.TARO_ENV === 'h5' && typeof document !== 'undefined') {
+      const el = document.querySelector(`[data-fan="${CSS.escape(targetFan)}"]`);
+      if (el && 'scrollIntoView' in el) {
+        (el as Element).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    const t = setTimeout(() => setHighlightFan(null), 2400);
+    return () => clearTimeout(t);
+  }, [targetFan]);
 
   const filtered = useMemo(() => {
     let list = selectedCategory === 'all'
@@ -62,10 +91,12 @@ export default function FanTable() {
         <View className={styles.list}>
           {filtered.map(fan => {
             const isExpanded = expanded.has(fan.name);
+            const isTarget = highlightFan === fan.name;
             return (
               <View
                 key={fan.name}
-                className={`${styles.item} ${isExpanded ? styles.expanded : ''}`}
+                data-fan={fan.name}
+                className={`${styles.item} ${isExpanded ? styles.expanded : ''} ${isTarget ? styles.highlight : ''}`}
                 onClick={() => toggle(fan.name)}
               >
                 <View className={styles.header}>

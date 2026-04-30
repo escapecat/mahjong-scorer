@@ -16,7 +16,7 @@ import {
   type Session,
   type SessionStore,
 } from './sessionStorage';
-import { aggregateByPlayer, sessionsToCSV, buildRunningTotals, type TimeRange } from './aggregation';
+import { aggregateByPlayer, buildRunningTotals, type TimeRange } from './aggregation';
 import { TrendChart } from '../../components/TrendChart';
 import { SessionShareButton } from '../../components/SessionShareButton';
 import styles from './index.module.css';
@@ -205,16 +205,6 @@ export default function SessionPage() {
 
   const playerAgg = useMemo(() => aggregateByPlayer(store.sessions, aggRange), [store, aggRange]);
   const runningPoints = useMemo(() => active ? buildRunningTotals(active) : [], [active]);
-
-  const exportAllCSV = useCallback(() => {
-    if (store.sessions.length === 0) {
-      Taro.showToast({ title: '没有数据', icon: 'none', duration: 1200 });
-      return;
-    }
-    const csv = sessionsToCSV(store.sessions);
-    Taro.setClipboardData({ data: csv });
-    Taro.showToast({ title: 'CSV 已复制,粘贴到表格软件即可', icon: 'none', duration: 2000 });
-  }, [store]);
 
   const backupAll = useCallback(() => {
     if (store.sessions.length === 0) {
@@ -410,9 +400,7 @@ export default function SessionPage() {
                     <View className={styles.copyBtn} onClick={copySession}>
                       <Text>📋 复制</Text>
                     </View>
-                    {process.env.TARO_ENV === 'h5' && (
-                      <SessionShareButton session={active} />
-                    )}
+                    <SessionShareButton session={active} />
                   </View>
                 )}
               </View>
@@ -484,13 +472,10 @@ export default function SessionPage() {
             ))}
             <View className={styles.dataActions}>
               <View className={styles.dataBtn} onClick={backupAll}>
-                <Text>📦 备份(JSON)</Text>
+                <Text>📦 备份全部数据</Text>
               </View>
               <View className={styles.dataBtn} onClick={restoreAll}>
                 <Text>📥 恢复</Text>
-              </View>
-              <View className={styles.dataBtn} onClick={exportAllCSV}>
-                <Text>📊 导出 CSV</Text>
               </View>
             </View>
           </View>

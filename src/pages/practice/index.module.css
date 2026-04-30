@@ -261,18 +261,89 @@
 .candidateTiles {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px;
+  gap: 8px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.82);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
 .candidateTile {
-  padding: 6px;
+  position: relative;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.92);
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 3px solid rgba(203, 213, 225, 0.6);
   border-radius: 10px;
   box-shadow: 2px 2px 6px rgba(148, 163, 184, 0.15);
+  transition: transform 0.1s, border-color 0.15s;
+}
+/* Selection badge — appears on top-right corner of selected tiles */
+.candidateTile::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: transparent;
+  z-index: 2;
+  transition: all 0.15s;
+}
+.candidateTile.selected {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.candidateTile.selected::after {
+  content: "✓";
+  background: #2563eb;
+  border-color: #fff;
+  color: #fff;
+}
+.candidateTile.correctSelected {
+  background: rgba(74, 222, 128, 0.25);
+  border-color: #22c55e;
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+.candidateTile.correctSelected::after {
+  content: "✓";
+  background: #22c55e;
+  border-color: #fff;
+  color: #fff;
+}
+.candidateTile.correctMissed {
+  background: rgba(254, 240, 138, 0.4);
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.25);
+}
+.candidateTile.correctMissed::after {
+  content: "!";
+  background: #eab308;
+  border-color: #fff;
+  color: #fff;
+}
+.candidateTile.wrongSelected {
+  background: rgba(252, 165, 165, 0.3);
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+.candidateTile.wrongSelected::after {
+  content: "✕";
+  background: #ef4444;
+  border-color: #fff;
+  color: #fff;
+}
+.candidateTile.notSelected {
+  opacity: 0.4;
 }
 .disabledBtn {
   opacity: 0.5;

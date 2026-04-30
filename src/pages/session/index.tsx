@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, Input } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { BottomNav } from '../../components/BottomNav';
 import { RoundEntryModal } from '../../components/RoundEntryModal';
 import {
@@ -53,6 +53,12 @@ export default function SessionPage() {
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [aggRange, setAggRange] = useState<TimeRange>('week');
   const [showAllArchived, setShowAllArchived] = useState(false);
+
+  useShareAppMessage(() => ({
+    title: '国标麻将对局计分 · 自动算分,生成战报',
+    path: '/pages/session/index',
+  }));
+  useShareTimeline(() => ({ title: '国标麻将对局计分', query: '' }));
 
   // persist on every store change
   useEffect(() => {

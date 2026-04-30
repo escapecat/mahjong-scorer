@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text } from '@tarojs/components';
+import { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { BottomNav } from '../../components/BottomNav';
 import { FanPickMode } from './modes/FanPickMode';
 import { FanCountMode } from './modes/FanCountMode';
@@ -16,6 +17,12 @@ const MODE_LABELS: Record<Mode, string> = {
 
 export default function Practice() {
   const [mode, setMode] = useState<Mode>('fanCount');
+
+  useShareAppMessage(() => ({
+    title: '国标麻将练习 · 算番、听牌、选番种',
+    path: '/pages/practice/index',
+  }));
+  useShareTimeline(() => ({ title: '国标麻将练习', query: '' }));
 
   const containerStyle = process.env.TARO_ENV !== 'h5' ? { maxWidth: 'none' } : undefined;
 

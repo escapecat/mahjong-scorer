@@ -1,5 +1,5 @@
 import { View } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { useCalculator } from './useCalculator';
 import { parseHandString } from '../../engine/handString';
 import { ScoreBar } from '../../components/ScoreBar';
@@ -21,6 +21,18 @@ export default function Index() {
     discardAnalysisInputs, fanPotentialInputs,
     canUndo, canRedo, exportHandString,
   } = useCalculator();
+
+  // weapp share. No-op on H5.
+  useShareAppMessage(() => ({
+    title: currentResult
+      ? `我和了 ${currentResult.totalFan} 番 — 国标麻将算番器`
+      : '国标麻将算番器 · 算番 / 听牌 / 计分一站搞定',
+    path: '/pages/index/index',
+  }));
+  useShareTimeline(() => ({
+    title: '国标麻将算番器',
+    query: '',
+  }));
 
   async function handleCopy() {
     const s = exportHandString();

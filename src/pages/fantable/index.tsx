@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { View, Image, Text, Input } from '@tarojs/components';
-import { useRouter } from '@tarojs/taro';
+import { useRouter, useShareAppMessage, useShareTimeline } from '@tarojs/taro';
 import { ALL_FANS, FAN_CATEGORIES, parseExampleTiles } from '../../engine/fanData';
 import { tileIconPathByCode } from '../../engine/tileIcon';
 import { BottomNav } from '../../components/BottomNav';
@@ -8,6 +8,12 @@ import styles from './index.module.css';
 
 export default function FanTable() {
   const router = useRouter();
+
+  useShareAppMessage(() => ({
+    title: '国标麻将番表 · 81 番完整查询',
+    path: '/pages/fantable/index',
+  }));
+  useShareTimeline(() => ({ title: '国标麻将番表', query: '' }));
   const targetFan = router.params.fan
     ? decodeURIComponent(router.params.fan)
     : null;

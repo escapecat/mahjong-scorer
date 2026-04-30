@@ -3,8 +3,11 @@ import { View, Image, Text } from '@tarojs/components';
 import { generateFanPickQuestion, type FanPickQuestion } from '../handGenerator';
 import { tileIconPath } from '../../../engine/tileIcon';
 import { tileFromIndex, tileEquals } from '../../../engine/models/tile';
+import { meldTiles } from '../../../engine/models/meld';
 import { useStreak } from '../useStreak';
 import styles from '../index.module.css';
+
+const MELD_TAG: Record<string, string> = { sequence: '吃', triplet: '碰', kong: '杠' };
 
 const WIND_LABEL: Record<string, string> = { '0': '东', '1': '南', '2': '西', '3': '北' };
 
@@ -47,17 +50,18 @@ export function FanPickMode() {
     && selected.size === question.correctFanNames.size
     && [...selected].every(n => question.correctFanNames.has(n));
 
-  // Build hand display
+  // Build hand display: concealed tiles only
   const handTiles: { tile: ReturnType<typeof tileFromIndex>; isWin: boolean }[] = [];
   let winMarked = false;
   for (let i = 0; i < 34; i++) {
-    for (let j = 0; j < question.counts.getByIndex(i); j++) {
+    for (let j = 0; j < question.handCounts.getByIndex(i); j++) {
       const t = tileFromIndex(i);
       const isWin = !winMarked && question.game.winningTile && tileEquals(t, question.game.winningTile);
       if (isWin) winMarked = true;
       handTiles.push({ tile: t, isWin: !!isWin });
     }
   }
+  const hasMelds = question.lockedMelds.length > 0;
 
   return (
     <>
@@ -84,6 +88,15 @@ export function FanPickMode() {
           ) : (
             <Image key={i} className={styles.tileImg} src={tileIconPath(tile)} mode='aspectFit' />
           )
+        ))}
+        {hasMelds && <Text className={styles.handSep}>│</Text>}
+        {question.lockedMelds.map((meld, mi) => (
+          <View key={`m-${mi}`} className={styles.meldGroup}>
+            {meldTiles(meld).map((t, ti) => (
+              <Image key={ti} className={styles.tileImg} src={tileIconPath(t)} mode='aspectFit' />
+            ))}
+            <Text className={styles.meldTag}>{MELD_TAG[meld.type]}</Text>
+          </View>
         ))}
       </View>
 

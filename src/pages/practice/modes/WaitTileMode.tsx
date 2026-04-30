@@ -3,8 +3,11 @@ import { View, Image, Text } from '@tarojs/components';
 import { generateWaitTileQuestion, type WaitTileQuestion } from '../handGenerator';
 import { tileIconPath } from '../../../engine/tileIcon';
 import { tileFromIndex, tileIndex } from '../../../engine/models/tile';
+import { meldTiles } from '../../../engine/models/meld';
 import { useStreak } from '../useStreak';
 import styles from '../index.module.css';
+
+const MELD_TAG: Record<string, string> = { sequence: '吃', triplet: '碰', kong: '杠' };
 
 export function WaitTileMode() {
   const [question, setQuestion] = useState<WaitTileQuestion | null>(null);
@@ -45,13 +48,14 @@ export function WaitTileMode() {
     && selected.size === question.correctTileIndices.size
     && [...selected].every(i => question.correctTileIndices.has(i));
 
-  // 13 tile hand
+  // 13 tiles concealed only
   const handTiles: ReturnType<typeof tileFromIndex>[] = [];
   for (let i = 0; i < 34; i++) {
-    for (let j = 0; j < question.counts.getByIndex(i); j++) {
+    for (let j = 0; j < question.handCounts.getByIndex(i); j++) {
       handTiles.push(tileFromIndex(i));
     }
   }
+  const hasMelds = question.lockedMelds.length > 0;
 
   return (
     <>
@@ -63,6 +67,15 @@ export function WaitTileMode() {
       <View className={styles.handBar}>
         {handTiles.map((tile, i) => (
           <Image key={i} className={styles.tileImg} src={tileIconPath(tile)} mode='aspectFit' />
+        ))}
+        {hasMelds && <Text className={styles.handSep}>│</Text>}
+        {question.lockedMelds.map((meld, mi) => (
+          <View key={`m-${mi}`} className={styles.meldGroup}>
+            {meldTiles(meld).map((t, ti) => (
+              <Image key={ti} className={styles.tileImg} src={tileIconPath(t)} mode='aspectFit' />
+            ))}
+            <Text className={styles.meldTag}>{MELD_TAG[meld.type]}</Text>
+          </View>
         ))}
       </View>
 

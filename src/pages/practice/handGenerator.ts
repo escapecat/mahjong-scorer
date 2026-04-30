@@ -1,13 +1,16 @@
 import { TileSet } from '../../engine/models/tileSet';
 import { tileFromIndex, type Tile, Tiles } from '../../engine/models/tile';
+import { sequence, triplet, type Meld } from '../../engine/models/meld';
 import { createGameContext, type GameContext, type EvaluationResult } from '../../engine/models/types';
 import { evaluate } from '../../engine/evaluator';
-import { isWinningHand } from '../../engine/decomposer';
+import { isWinningHandWithMelds } from '../../engine/decomposer';
 import { ALL_FANS } from '../../engine/fanData';
 
 export interface FanPickQuestion {
   kind: 'fanPick';
-  counts: TileSet;
+  counts: TileSet;       // all tiles (hand + meld)
+  handCounts: TileSet;   // concealed hand only (for display)
+  lockedMelds: Meld[];   // open melds (for display)
   game: GameContext;
   result: EvaluationResult;
   options: FanOption[];
@@ -17,6 +20,8 @@ export interface FanPickQuestion {
 export interface FanCountQuestion {
   kind: 'fanCount';
   counts: TileSet;
+  handCounts: TileSet;
+  lockedMelds: Meld[];
   game: GameContext;
   result: EvaluationResult;
   choices: number[];
@@ -25,8 +30,11 @@ export interface FanCountQuestion {
 
 export interface WaitTileQuestion {
   kind: 'waitTile';
-  /** 13 tiles in tenpai */
+  /** 13 tiles total (hand + meld) in tenpai */
   counts: TileSet;
+  /** Concealed hand portion (13 - 3*meldCount tiles) */
+  handCounts: TileSet;
+  lockedMelds: Meld[];
   game: Omit<GameContext, 'winningTile'>;
   /** All valid winning tile indices */
   correctTileIndices: Set<number>;
@@ -50,20 +58,39 @@ function pickRandomWind(): Tile {
   return [Tiles.East, Tiles.South, Tiles.West, Tiles.North][randInt(4)];
 }
 
+interface GeneratedHand {
+  fullCounts: TileSet;        // all 14 tiles (hand + melds)
+  handCounts: TileSet;        // concealed hand portion only
+  lockedMelds: Meld[];        // open chi/peng melds
+  chiCount: number;
+  pengCount: number;
+}
+
 /**
- * Generate a random valid 14-tile winning hand by build-backwards approach.
+ * Generate a random valid 14-tile winning hand. Optionally includes open melds
+ * (chi/peng) to mimic real game scenarios.
  */
-function generateValidHand(): TileSet | null {
+function generateValidHand(): GeneratedHand | null {
   for (let attempt = 0; attempt < 200; attempt++) {
+    // 50% concealed, 30% 1 open meld, 15% 2 open melds, 5% 3 open melds
+    const r = Math.random();
+    const openMeldTarget = r < 0.5 ? 0 : r < 0.8 ? 1 : r < 0.95 ? 2 : 3;
+
     const counts = new Array(34).fill(0);
+    const lockedMelds: Meld[] = [];
+    let chiCount = 0;
+    let pengCount = 0;
+
+    // Place pair
     const pairIdx = randInt(34);
     counts[pairIdx] = 2;
 
     let melds = 0;
     let inner = 0;
-    while (melds < 4 && inner < 50) {
+    while (melds < 4 && inner < 80) {
       inner++;
       const isSequence = Math.random() < 0.6;
+      const isOpen = melds < openMeldTarget;
 
       if (isSequence) {
         const suit = randInt(3);
@@ -73,35 +100,72 @@ function generateValidHand(): TileSet | null {
           counts[start]++;
           counts[start + 1]++;
           counts[start + 2]++;
+          if (isOpen) {
+            lockedMelds.push(sequence(tileFromIndex(start), true));
+            chiCount++;
+          }
           melds++;
         }
       } else {
         const idx = randInt(34);
         if (counts[idx] + 3 <= 4) {
           counts[idx] += 3;
+          if (isOpen) {
+            lockedMelds.push(triplet(tileFromIndex(idx), true));
+            pengCount++;
+          }
           melds++;
         }
       }
     }
 
     if (melds === 4 && counts.reduce((a, b) => a + b, 0) === 14) {
-      return TileSet.fromCounts(counts);
+      const fullCounts = TileSet.fromCounts(counts);
+
+      // Build handCounts = fullCounts - lockedMeld tiles
+      const handRaw = [...counts];
+      for (const m of lockedMelds) {
+        if (m.type === 'sequence') {
+          handRaw[m.start.suit === 'man' ? m.start.rank
+            : m.start.suit === 'pin' ? 9 + m.start.rank
+            : 18 + m.start.rank]--;
+          const next1 = m.start.suit === 'man' ? m.start.rank + 1
+            : m.start.suit === 'pin' ? 10 + m.start.rank
+            : 19 + m.start.rank;
+          handRaw[next1]--;
+          handRaw[next1 + 1]--;
+        } else {
+          // triplet
+          const idx = m.start.suit === 'man' ? m.start.rank
+            : m.start.suit === 'pin' ? 9 + m.start.rank
+            : m.start.suit === 'sou' ? 18 + m.start.rank
+            : m.start.suit === 'wind' ? 27 + m.start.rank
+            : 31 + m.start.rank;
+          handRaw[idx] -= 3;
+        }
+      }
+      const handCounts = TileSet.fromCounts(handRaw);
+
+      return { fullCounts, handCounts, lockedMelds, chiCount, pengCount };
     }
   }
   return null;
 }
 
-function generateGameContext(counts: TileSet): GameContext {
+function generateGameContext(handCounts: TileSet, chiCount: number, pengCount: number): GameContext {
+  // Winning tile must come from concealed hand (it's the tile drawn/ron'd on)
   const tiles: Tile[] = [];
   for (let i = 0; i < 34; i++) {
-    for (let j = 0; j < counts.getByIndex(i); j++) {
+    for (let j = 0; j < handCounts.getByIndex(i); j++) {
       tiles.push(tileFromIndex(i));
     }
   }
-  const winningTile = tiles[randInt(tiles.length)];
+  const winningTile = tiles.length > 0 ? tiles[randInt(tiles.length)] : Tiles.East;
 
+  // If hand has open melds, can't be self-draw + 不求人 always; bias differently
+  const hasOpen = chiCount + pengCount > 0;
   return createGameContext({
-    isSelfDraw: Math.random() < 0.6,
+    isSelfDraw: hasOpen ? Math.random() < 0.5 : Math.random() < 0.6,
     winningTile,
     seatWind: pickRandomWind(),
     roundWind: pickRandomWind(),
@@ -110,6 +174,8 @@ function generateGameContext(counts: TileSet): GameContext {
     isKongDraw: false,
     isRobbingKong: false,
     isWinningTileLast: Math.random() < 0.1,
+    chiCount,
+    pengCount,
   });
 }
 
@@ -199,11 +265,11 @@ function pickDistractors(
 // ── Mode C: Pick fans ──
 export function generateFanPickQuestion(): FanPickQuestion | null {
   for (let attempt = 0; attempt < 20; attempt++) {
-    const counts = generateValidHand();
-    if (!counts) continue;
+    const gen = generateValidHand();
+    if (!gen) continue;
 
-    const game = generateGameContext(counts);
-    const result = evaluate(counts, [], game);
+    const game = generateGameContext(gen.handCounts, gen.chiCount, gen.pengCount);
+    const result = evaluate(gen.fullCounts, gen.lockedMelds, game);
     if (result.totalFan === 0) continue;
 
     const correctFans = result.fans
@@ -212,7 +278,7 @@ export function generateFanPickQuestion(): FanPickQuestion | null {
     if (correctFans.length === 0) continue;
 
     const correctFanNames = new Set(correctFans.map(f => f.name));
-    const distractors = pickDistractors(correctFanNames, game, counts, 4);
+    const distractors = pickDistractors(correctFanNames, game, gen.fullCounts, 4);
     const optionNames = [...correctFanNames, ...distractors];
 
     const options: FanOption[] = optionNames
@@ -226,7 +292,16 @@ export function generateFanPickQuestion(): FanPickQuestion | null {
       })
       .sort(() => Math.random() - 0.5);
 
-    return { kind: 'fanPick', counts, game, result, options, correctFanNames };
+    return {
+      kind: 'fanPick',
+      counts: gen.fullCounts,
+      handCounts: gen.handCounts,
+      lockedMelds: gen.lockedMelds,
+      game,
+      result,
+      options,
+      correctFanNames,
+    };
   }
   return null;
 }
@@ -234,15 +309,14 @@ export function generateFanPickQuestion(): FanPickQuestion | null {
 // ── Mode A: Guess fan count ──
 export function generateFanCountQuestion(): FanCountQuestion | null {
   for (let attempt = 0; attempt < 20; attempt++) {
-    const counts = generateValidHand();
-    if (!counts) continue;
+    const gen = generateValidHand();
+    if (!gen) continue;
 
-    const game = generateGameContext(counts);
-    const result = evaluate(counts, [], game);
+    const game = generateGameContext(gen.handCounts, gen.chiCount, gen.pengCount);
+    const result = evaluate(gen.fullCounts, gen.lockedMelds, game);
     if (result.totalFan === 0) continue;
 
     const correct = result.totalFan;
-    // Generate 3 plausible distractors: off by ±2~10
     const distractors = new Set<number>();
     while (distractors.size < 3) {
       const offset = (randInt(8) + 2) * (Math.random() < 0.5 ? -1 : 1);
@@ -254,7 +328,16 @@ export function generateFanCountQuestion(): FanCountQuestion | null {
     const choices = [...distractors, correct].sort(() => Math.random() - 0.5);
     const correctIndex = choices.indexOf(correct);
 
-    return { kind: 'fanCount', counts, game, result, choices, correctIndex };
+    return {
+      kind: 'fanCount',
+      counts: gen.fullCounts,
+      handCounts: gen.handCounts,
+      lockedMelds: gen.lockedMelds,
+      game,
+      result,
+      choices,
+      correctIndex,
+    };
   }
   return null;
 }
@@ -262,31 +345,35 @@ export function generateFanCountQuestion(): FanCountQuestion | null {
 // ── Mode B: Guess winning tile ──
 export function generateWaitTileQuestion(): WaitTileQuestion | null {
   for (let attempt = 0; attempt < 30; attempt++) {
-    const fullCounts = generateValidHand();
-    if (!fullCounts) continue;
+    const gen = generateValidHand();
+    if (!gen) continue;
 
-    // Pick a random tile to remove → 13-tile tenpai
-    const tilesInHand: number[] = [];
+    // Pick a random tile from CONCEALED hand to remove → 13-tile tenpai
+    const handTiles: number[] = [];
     for (let i = 0; i < 34; i++) {
-      for (let j = 0; j < fullCounts.getByIndex(i); j++) {
-        tilesInHand.push(i);
+      for (let j = 0; j < gen.handCounts.getByIndex(i); j++) {
+        handTiles.push(i);
       }
     }
-    const removeIdx = tilesInHand[randInt(tilesInHand.length)];
+    if (handTiles.length === 0) continue;
+    const removeIdx = handTiles[randInt(handTiles.length)];
 
-    const tenpaiCounts = fullCounts.clone();
-    tenpaiCounts.remove(tileFromIndex(removeIdx));
+    const tenpaiHand = gen.handCounts.clone();
+    tenpaiHand.remove(tileFromIndex(removeIdx));
 
-    // Find ALL valid winning tiles
+    const tenpaiFull = gen.fullCounts.clone();
+    tenpaiFull.remove(tileFromIndex(removeIdx));
+
+    // Find ALL valid winning tiles by trying each tile + checking with locked melds
     const correctTileIndices = new Set<number>();
-    const raw = [...tenpaiCounts.rawCounts()];
+    const fullRaw = [...tenpaiFull.rawCounts()];
     for (let i = 0; i < 34; i++) {
-      if (raw[i] >= 4) continue;
-      raw[i]++;
-      if (isWinningHand(TileSet.fromCounts(raw))) {
+      if (fullRaw[i] >= 4) continue;
+      fullRaw[i]++;
+      if (isWinningHandWithMelds(TileSet.fromCounts(fullRaw), gen.lockedMelds)) {
         correctTileIndices.add(i);
       }
-      raw[i]--;
+      fullRaw[i]--;
     }
 
     if (correctTileIndices.size === 0) continue;
@@ -305,26 +392,18 @@ export function generateWaitTileQuestion(): WaitTileQuestion | null {
     const candidateIndices = [...correctTileIndices, ...distractors].sort(() => Math.random() - 0.5);
     const candidateTiles = candidateIndices.map(i => tileFromIndex(i));
 
-    const game: Omit<GameContext, 'winningTile'> = {
-      isSelfDraw: Math.random() < 0.6,
-      seatWind: pickRandomWind(),
-      roundWind: pickRandomWind(),
-      flowerCount: 0,
-      isLastTile: false,
-      isKongDraw: false,
-      isRobbingKong: false,
-      isWinningTileLast: false,
-      mingKongCount: 0,
-      anKongCount: 0,
-      chiCount: 0,
-      pengCount: 0,
-      kongCount: 0,
-      hasOpenMeld: false,
-      totalMeldCount: 0,
-      totalOpenMeldCount: 0,
-    };
+    const baseGame = generateGameContext(tenpaiHand, gen.chiCount, gen.pengCount);
+    const { winningTile, ...game } = baseGame;
 
-    return { kind: 'waitTile', counts: tenpaiCounts, game, correctTileIndices, candidateTiles };
+    return {
+      kind: 'waitTile',
+      counts: tenpaiFull,
+      handCounts: tenpaiHand,
+      lockedMelds: gen.lockedMelds,
+      game,
+      correctTileIndices,
+      candidateTiles,
+    };
   }
   return null;
 }

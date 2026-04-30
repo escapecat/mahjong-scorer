@@ -32,12 +32,18 @@ export interface Round {
   fan?: number;
   /** Free-form note, e.g. "包牌张三" — currently unused, reserved for Phase 2. */
   notes?: string;
+  /** Manual override: if present, used INSTEAD of auto-computed deltas.
+   *  Lets users record house-rule scoring (罚分、不同起和番、一炮多响 etc). */
+  manualDeltas?: ScoreDelta;
 }
 
 /** Per-seat score delta for one round; sum is always 0 for valid rounds. */
 export type ScoreDelta = readonly [number, number, number, number];
 
 export function computeRoundDeltas(round: Round): ScoreDelta {
+  // Honor manual overrides first — used when local rules don't match standard
+  // 国标 (e.g. different 起和番, 一炮多响, 包牌, 罚分).
+  if (round.manualDeltas) return round.manualDeltas;
   if (round.type === 'draw') {
     return [0, 0, 0, 0];
   }

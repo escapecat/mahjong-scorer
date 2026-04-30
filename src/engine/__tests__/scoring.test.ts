@@ -43,6 +43,22 @@ describe('computeRoundDeltas', () => {
     }
   });
 
+  it('manual deltas override auto-computed values', () => {
+    const r = mkRound({
+      type: 'discard',
+      winnerSeat: 0,
+      discarderSeat: 2,
+      fan: 8,
+      manualDeltas: [50, -20, -25, -5],
+    });
+    expect(computeRoundDeltas(r)).toEqual([50, -20, -25, -5]);
+  });
+
+  it('manual deltas allowed for draws too (e.g. house penalty)', () => {
+    const r = mkRound({ type: 'draw', manualDeltas: [-3, 1, 1, 1] });
+    expect(computeRoundDeltas(r)).toEqual([-3, 1, 1, 1]);
+  });
+
   it('rejects malformed rounds (winner == discarder, missing seat) without crashing', () => {
     expect(computeRoundDeltas(mkRound({ type: 'selfDraw' /* no winnerSeat */ }))).toEqual([0, 0, 0, 0]);
     expect(computeRoundDeltas(mkRound({ type: 'discard', winnerSeat: 0, discarderSeat: 0, fan: 8 }))).toEqual([0, 0, 0, 0]);

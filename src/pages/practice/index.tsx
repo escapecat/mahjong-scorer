@@ -39,9 +39,16 @@ export default function Practice() {
           ))}
         </View>
 
-        {mode === 'fanCount' && <FanCountMode />}
-        {mode === 'waitTile' && <WaitTileMode />}
-        {mode === 'fanPick' && <FanPickMode />}
+        {/* All three modes stay mounted so switching tabs preserves the current question */}
+        <View style={{ display: mode === 'fanCount' ? 'block' : 'none' }}>
+          <FanCountMode />
+        </View>
+        <View style={{ display: mode === 'waitTile' ? 'block' : 'none' }}>
+          <WaitTileMode />
+        </View>
+        <View style={{ display: mode === 'fanPick' ? 'block' : 'none' }}>
+          <FanPickMode />
+        </View>
       </View>
       <BottomNav active='practice' />
     </View>

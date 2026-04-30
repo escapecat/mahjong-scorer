@@ -159,7 +159,14 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
     </View>
   );
 
-  if (typeof document !== 'undefined') {
+  // H5 portals to body so the modal escapes the page wrapper. In weapp
+  // there's no DOM/react-dom, so render in-place — `position: fixed`
+  // already covers the viewport correctly there.
+  const useDomPortal =
+    process.env.TARO_ENV === 'h5' &&
+    typeof document !== 'undefined' &&
+    !!document.body;
+  if (useDomPortal) {
     return createPortal(modal, document.body);
   }
   return modal;

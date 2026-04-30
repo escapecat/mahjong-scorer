@@ -6,17 +6,19 @@ import styles from './RoundEntryModal.module.css';
 
 interface Props {
   players: readonly [string, string, string, string];
+  /** 起和番 carried by the parent session. Used in auto-mode preview/save. */
+  baseScore: number;
   initial?: Round;     // present when editing
   onSave: (round: Round) => void;
   onCancel: () => void;
 }
 
-export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
+export function RoundEntryModal({ players, baseScore, initial, onSave, onCancel }: Props) {
   const [mode, setMode] = useState<'auto' | 'manual'>(initial?.manualDeltas ? 'manual' : 'auto');
   const [type, setType] = useState<WinType>(initial?.type ?? 'selfDraw');
   const [winnerSeat, setWinnerSeat] = useState<number | null>(initial?.winnerSeat ?? null);
   const [discarderSeat, setDiscarderSeat] = useState<number | null>(initial?.discarderSeat ?? null);
-  const [fanText, setFanText] = useState<string>(initial?.fan != null ? String(initial.fan) : '8');
+  const [fanText, setFanText] = useState<string>(initial?.fan != null ? String(initial.fan) : String(baseScore));
   const [manualText, setManualText] = useState<[string, string, string, string]>(
     initial?.manualDeltas
       ? [String(initial.manualDeltas[0]), String(initial.manualDeltas[1]), String(initial.manualDeltas[2]), String(initial.manualDeltas[3])]
@@ -48,8 +50,8 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
       : type === 'draw'
         ? true
         : type === 'selfDraw'
-          ? winnerSeat != null && fanValid && fan >= 8
-          : winnerSeat != null && discarderSeat != null && winnerSeat !== discarderSeat && fanValid && fan >= 8;
+          ? winnerSeat != null && fanValid
+          : winnerSeat != null && discarderSeat != null && winnerSeat !== discarderSeat && fanValid;
 
   // Live preview of deltas (auto mode only — manual mode shows the inputs themselves)
   const preview = mode === 'auto' && canSave && type !== 'draw'
@@ -60,6 +62,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
         winnerSeat: winnerSeat!,
         discarderSeat: discarderSeat ?? undefined,
         fan,
+        baseScore,
       })
     : null;
 
@@ -77,6 +80,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
         winnerSeat: winnerSeat ?? undefined,
         discarderSeat: type === 'discard' ? discarderSeat ?? undefined : undefined,
         fan: type === 'draw' ? undefined : (fanValid ? fan : undefined),
+        baseScore,
         manualDeltas: manualNums,
       });
       return;
@@ -88,6 +92,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
       winnerSeat: winnerSeat ?? undefined,
       discarderSeat: type === 'discard' ? discarderSeat ?? undefined : undefined,
       fan: type === 'draw' ? undefined : fan,
+      baseScore,
     });
   }
 
@@ -164,7 +169,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
             <Text className={styles.formLabel}>
               番数
               {mode === 'auto'
-                ? <Text className={styles.formHint}> (含花牌,≥8)</Text>
+                ? <Text className={styles.formHint}> (含花牌,本局底分 {baseScore})</Text>
                 : <Text className={styles.formHint}> (可选,记录用)</Text>}
             </Text>
             <Input
@@ -172,7 +177,7 @@ export function RoundEntryModal({ players, initial, onSave, onCancel }: Props) {
               type='number'
               value={fanText}
               onInput={(e) => setFanText(e.detail.value)}
-              placeholder='8'
+              placeholder={String(Math.max(1, baseScore))}
             />
           </View>
         )}

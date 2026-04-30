@@ -59,6 +59,23 @@ describe('computeRoundDeltas', () => {
     expect(computeRoundDeltas(r)).toEqual([-3, 1, 1, 1]);
   });
 
+  it('configurable base score: self-draw at 8 fan with base=5', () => {
+    const r = mkRound({ type: 'selfDraw', winnerSeat: 0, fan: 8, baseScore: 5 });
+    // winner +(5+8)*3 = +39, each loser -(5+8) = -13
+    expect(computeRoundDeltas(r)).toEqual([39, -13, -13, -13]);
+  });
+
+  it('configurable base score: discard at 8 fan with base=0 (only fan matters)', () => {
+    const r = mkRound({ type: 'discard', winnerSeat: 0, discarderSeat: 2, fan: 8, baseScore: 0 });
+    // winner +(0+8)+0+0 = +8, discarder -(0+8) = -8, others 0
+    expect(computeRoundDeltas(r)).toEqual([8, 0, -8, 0]);
+  });
+
+  it('default baseScore is 8 when omitted', () => {
+    const r = mkRound({ type: 'selfDraw', winnerSeat: 0, fan: 8 });
+    expect(computeRoundDeltas(r)).toEqual([48, -16, -16, -16]);
+  });
+
   it('rejects malformed rounds (winner == discarder, missing seat) without crashing', () => {
     expect(computeRoundDeltas(mkRound({ type: 'selfDraw' /* no winnerSeat */ }))).toEqual([0, 0, 0, 0]);
     expect(computeRoundDeltas(mkRound({ type: 'discard', winnerSeat: 0, discarderSeat: 0, fan: 8 }))).toEqual([0, 0, 0, 0]);

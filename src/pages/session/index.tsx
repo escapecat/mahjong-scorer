@@ -33,10 +33,19 @@ function describeRound(r: Round, players: readonly string[]): string {
   return `${winner} 点炮(${dis}打) ${r.fan}番`;
 }
 
+const BASE_PRESETS = [
+  { value: 0, label: '0' },
+  { value: 1, label: '1' },
+  { value: 5, label: '5' },
+  { value: 8, label: '8 (国标)' },
+  { value: 10, label: '10' },
+];
+
 export default function SessionPage() {
   const [store, setStore] = useState<SessionStore>(() => loadSessions());
   const [showSetup, setShowSetup] = useState(false);
   const [setupNames, setSetupNames] = useState<[string, string, string, string]>(['', '', '', '']);
+  const [setupBase, setSetupBase] = useState<number>(8);
   const [showEntry, setShowEntry] = useState(false);
   const [editingRound, setEditingRound] = useState<Round | null>(null);
 
@@ -72,14 +81,15 @@ export default function SessionPage() {
       setupNames[2].trim() || '西',
       setupNames[3].trim() || '北',
     ];
-    const session = createSession(players);
+    const session = createSession(players, setupBase);
     setStore((prev) => ({
       activeSessionId: session.id,
       sessions: [...prev.sessions, session],
     }));
     setShowSetup(false);
     setSetupNames(['', '', '', '']);
-  }, [setupNames]);
+    setSetupBase(8);
+  }, [setupNames, setupBase]);
 
   const addRound = useCallback(
     (round: Round) => {
@@ -215,7 +225,7 @@ export default function SessionPage() {
 
         {!active && showSetup && (
           <View className={styles.setupCard}>
-            <Text className={styles.setupTitle}>设置玩家(留空使用东/南/西/北)</Text>
+            <Text className={styles.setupTitle}>玩家(留空用东/南/西/北)</Text>
             {[0, 1, 2, 3].map((i) => (
               <View key={i} className={styles.setupRow}>
                 <Text className={styles.setupSeat}>{SEAT_LABELS[i]}</Text>
@@ -232,8 +242,23 @@ export default function SessionPage() {
                 />
               </View>
             ))}
+            <Text className={styles.setupTitle}>底分(起和番)</Text>
+            <View className={styles.basePresetRow}>
+              {BASE_PRESETS.map((p) => (
+                <View
+                  key={p.value}
+                  className={`${styles.basePreset} ${setupBase === p.value ? styles.basePresetActive : ''}`}
+                  onClick={() => setSetupBase(p.value)}
+                >
+                  <Text>{p.label}</Text>
+                </View>
+              ))}
+            </View>
+            <Text className={styles.setupHint}>
+              当前公式:自摸 +({setupBase}+番)×3,点炮 +({setupBase}+番)+{setupBase * 2}
+            </Text>
             <View className={styles.setupActions}>
-              <View className={styles.setupCancel} onClick={() => { setShowSetup(false); setSetupNames(['', '', '', '']); }}>
+              <View className={styles.setupCancel} onClick={() => { setShowSetup(false); setSetupNames(['', '', '', '']); setSetupBase(8); }}>
                 <Text>取消</Text>
               </View>
               <View className={styles.setupConfirm} onClick={startSession}>
@@ -257,6 +282,7 @@ export default function SessionPage() {
                 </View>
               ))}
             </View>
+            <Text className={styles.baseHint}>底分: {active.baseScore} {active.baseScore === 8 ? '(国标)' : ''}</Text>
 
             <View className={styles.addBtn} onClick={() => { setEditingRound(null); setShowEntry(true); }}>
               <Text>➕ 录入这一把</Text>
@@ -337,6 +363,7 @@ export default function SessionPage() {
       {showEntry && active && (
         <RoundEntryModal
           players={active.players}
+          baseScore={active.baseScore}
           initial={editingRound ?? undefined}
           onSave={editingRound ? updateRound : addRound}
           onCancel={() => { setShowEntry(false); setEditingRound(null); }}

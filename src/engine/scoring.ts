@@ -1,16 +1,14 @@
 /**
- * 国标 (Chinese Standard) mahjong session scoring.
+ * 国标 (Chinese Standard) mahjong session scoring, with configurable base.
  *
- * Per 1998 中国麻将竞赛规则:
- *  - 起和番 = 8 (minimum fan to claim a win, included in each transaction).
- *  - 自摸: 三家各向赢家支付 (8 + 番).
- *      winner: +(8 + 番) × 3
- *      each loser: -(8 + 番)
- *  - 点炮: 出冲者支付 (8 + 番),其他两家各支付 8.
- *      winner: +(8 + 番) + 8 + 8 = +(24 + 番)
- *      discarder: -(8 + 番)
- *      others: -8 each
- *  - 流局 (黄庄): 没人胡牌,本回合 0 流转。
+ * The standard 国标 rule uses 起和番 = 8 (everyone pays the base + fan winner).
+ * Many local variants use a different base (0 / 1 / 5 / 10 / etc.) — set
+ * `Round.baseScore` accordingly. If unset, defaults to 8.
+ *
+ * Formula (parameterized over `b` = base score):
+ *  - 自摸: winner +(b + 番)×3,  each loser -(b + 番)
+ *  - 点炮: winner +(b + 番) + b + b,  discarder -(b + 番),  others -b each
+ *  - 流局 (黄庄): 0 transfer
  *
  * `fan` here is the TOTAL fan including the flower bonus the engine already
  * computes — callers should pass `evaluationResult.totalFan` straight in.
@@ -30,10 +28,12 @@ export interface Round {
   discarderSeat?: number;
   /** Total fan claimed (≥ 8 for valid wins, but we don't enforce). */
   fan?: number;
+  /** Base unit ("起和番"). 国标 default is 8. Some houses use 0/1/5/10. */
+  baseScore?: number;
   /** Free-form note, e.g. "包牌张三" — currently unused, reserved for Phase 2. */
   notes?: string;
   /** Manual override: if present, used INSTEAD of auto-computed deltas.
-   *  Lets users record house-rule scoring (罚分、不同起和番、一炮多响 etc). */
+   *  Lets users record house-rule scoring (一炮多响、罚分 etc). */
   manualDeltas?: ScoreDelta;
 }
 
@@ -53,14 +53,15 @@ export function computeRoundDeltas(round: Round): ScoreDelta {
     return [0, 0, 0, 0];
   }
   const fan = round.fan ?? 0;
-  const baseUnit = 8 + fan;
+  const base = round.baseScore ?? 8;
+  const winUnit = base + fan;
 
   const out: number[] = [0, 0, 0, 0];
 
   if (round.type === 'selfDraw') {
-    out[winner] = baseUnit * 3;
+    out[winner] = winUnit * 3;
     for (let i = 0; i < 4; i++) {
-      if (i !== winner) out[i] = -baseUnit;
+      if (i !== winner) out[i] = -winUnit;
     }
     return [out[0], out[1], out[2], out[3]];
   }
@@ -70,10 +71,10 @@ export function computeRoundDeltas(round: Round): ScoreDelta {
   if (discarder == null || discarder < 0 || discarder > 3 || discarder === winner) {
     return [0, 0, 0, 0];
   }
-  out[winner] = baseUnit + 8 + 8;
-  out[discarder] = -baseUnit;
+  out[winner] = winUnit + base + base;
+  out[discarder] = -winUnit;
   for (let i = 0; i < 4; i++) {
-    if (i !== winner && i !== discarder) out[i] = -8;
+    if (i !== winner && i !== discarder) out[i] = -base;
   }
   return [out[0], out[1], out[2], out[3]];
 }

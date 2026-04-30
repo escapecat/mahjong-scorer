@@ -7,6 +7,8 @@ export interface Session {
   endTime?: number;            // undefined while active
   players: [string, string, string, string];
   rounds: Round[];
+  /** 起和番 used by every round in this session unless overridden. Default 8 (国标). */
+  baseScore: number;
 }
 
 export interface SessionStore {
@@ -27,10 +29,13 @@ export function loadSessions(): SessionStore {
     if (!parsed || typeof parsed !== 'object') return EMPTY_STORE;
     if (!Array.isArray(parsed.sessions)) return EMPTY_STORE;
     // Defensive: drop any session that doesn't have a sane shape, so a single
-    // corrupt entry can't tank the whole page mount.
-    const validSessions = parsed.sessions.filter((s: any) =>
-      s && typeof s.id === 'string' && Array.isArray(s.players) && s.players.length === 4 && Array.isArray(s.rounds)
-    );
+    // corrupt entry can't tank the whole page mount. Also backfill baseScore
+    // so older v1 sessions keep working.
+    const validSessions = parsed.sessions
+      .filter((s: any) =>
+        s && typeof s.id === 'string' && Array.isArray(s.players) && s.players.length === 4 && Array.isArray(s.rounds)
+      )
+      .map((s: any) => ({ ...s, baseScore: typeof s.baseScore === 'number' ? s.baseScore : 8 }));
     return {
       activeSessionId: typeof parsed.activeSessionId === 'string' ? parsed.activeSessionId : null,
       sessions: validSessions,
@@ -67,11 +72,15 @@ export function makeId(): string {
   return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createSession(players: [string, string, string, string]): Session {
+export function createSession(
+  players: [string, string, string, string],
+  baseScore: number = 8,
+): Session {
   return {
     id: makeId(),
     startTime: Date.now(),
     players,
     rounds: [],
+    baseScore,
   };
 }

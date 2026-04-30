@@ -32,7 +32,7 @@ export function evaluate(
     if (specialResult.additionalRuleFilter) {
       const additionalRules = allFanRules.filter(specialResult.additionalRuleFilter);
       const dummyDecomp: HandDecomposition = { pair: { suit: 'man', rank: 0 }, melds: [] };
-      const ctx: FanContext = { allCounts, handCounts, decomposition: dummyDecomp, game };
+      const ctx: FanContext = { allCounts, handCounts, lockedMelds, decomposition: dummyDecomp, game };
 
       for (const rule of additionalRules) {
         const count = rule.match(ctx);
@@ -43,7 +43,7 @@ export function evaluate(
     }
 
     // Add situational fans
-    fans.push(...getSituationalFans(allCounts, handCounts, game));
+    fans.push(...getSituationalFans(allCounts, handCounts, lockedMelds, game));
 
     // Apply exclusions using all rules (special + standard) for the excludes lookup
     fans = applyExclusions(fans, allFanRules);
@@ -66,7 +66,7 @@ export function evaluate(
   const decompositions = decomposeHand(handCounts, lockedMelds);
 
   for (const decomp of decompositions) {
-    const ctx: FanContext = { allCounts, handCounts, decomposition: decomp, game };
+    const ctx: FanContext = { allCounts, handCounts, lockedMelds, decomposition: decomp, game };
 
     let fans: MatchedFan[] = [];
     for (const rule of allFanRules) {
@@ -106,7 +106,7 @@ export function evaluate(
 
 // ── Helpers ──
 
-function getSituationalFans(allCounts: TileSet, handCounts: TileSet, game: GameContext): MatchedFan[] {
+function getSituationalFans(allCounts: TileSet, handCounts: TileSet, lockedMelds: readonly Meld[], game: GameContext): MatchedFan[] {
   // Situational fans are already in allFanRules and matched in the main loop.
   // This is only for special hands that skip the main rule loop.
   const situationalNames = new Set([
@@ -116,7 +116,7 @@ function getSituationalFans(allCounts: TileSet, handCounts: TileSet, game: GameC
   ]);
 
   const dummyDecomp: HandDecomposition = { pair: { suit: 'man', rank: 0 }, melds: [] };
-  const ctx: FanContext = { allCounts, handCounts, decomposition: dummyDecomp, game };
+  const ctx: FanContext = { allCounts, handCounts, lockedMelds, decomposition: dummyDecomp, game };
 
   const fans: MatchedFan[] = [];
   for (const rule of allFanRules) {

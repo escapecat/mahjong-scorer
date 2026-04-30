@@ -1,6 +1,6 @@
 import type { FanRule, FanContext } from '../models/types';
 import { tileIndex } from '../models/tile';
-import { getWaitTypes } from '../waitAnalyzer';
+import { getWaitTypes, countWinningTiles } from '../waitAnalyzer';
 import { FN } from './fanNames';
 
 export const situationalFans: FanRule[] = [
@@ -68,12 +68,21 @@ export const situationalFans: FanRule[] = [
   },
 
   // ── 1番 ──
+  // 国标 wait fans (边张/坎张/单钓将) all require single-tile wait — see official
+  // rule descriptions: "单和 123 的 3", "单钓一张将牌", etc. Multi-tile waits
+  // (e.g. a 3-way 1p/4p/7p ladder) don't qualify even if the actually-won tile
+  // happens to fit the shape.
+  // They're also mutually exclusive: one winning tile can only fill one role.
+  // When multiple shapes apply (rare, e.g. winning tile that is both a pair
+  // partner and a sequence middle), prefer the sequence-shape interpretation
+  // (边张/坎张) — the pre-draw "partial + pair" structure is the natural read.
   {
     name: FN.BianZhang, points: 1,
     description: '和牌张为边张听牌',
-    excludes: [],
+    excludes: [FN.DanDiaoJiang],
     match: (ctx) => {
       if (!ctx.game.winningTile) return 0;
+      if (countWinningTiles(ctx.handCounts, ctx.lockedMelds, ctx.game.winningTile) !== 1) return 0;
       const waits = getWaitTypes(ctx.handCounts, ctx.game.winningTile);
       return waits.has('edge') ? 1 : 0;
     },
@@ -81,9 +90,10 @@ export const situationalFans: FanRule[] = [
   {
     name: FN.KanZhang, points: 1,
     description: '和牌张为坎张听牌',
-    excludes: [],
+    excludes: [FN.DanDiaoJiang],
     match: (ctx) => {
       if (!ctx.game.winningTile) return 0;
+      if (countWinningTiles(ctx.handCounts, ctx.lockedMelds, ctx.game.winningTile) !== 1) return 0;
       const waits = getWaitTypes(ctx.handCounts, ctx.game.winningTile);
       return waits.has('closed') ? 1 : 0;
     },
@@ -94,6 +104,7 @@ export const situationalFans: FanRule[] = [
     excludes: [],
     match: (ctx) => {
       if (!ctx.game.winningTile) return 0;
+      if (countWinningTiles(ctx.handCounts, ctx.lockedMelds, ctx.game.winningTile) !== 1) return 0;
       const waits = getWaitTypes(ctx.handCounts, ctx.game.winningTile);
       return waits.has('single') ? 1 : 0;
     },

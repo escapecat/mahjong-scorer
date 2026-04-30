@@ -1,7 +1,36 @@
 import { type Tile, tileIndex, tileFromIndex } from './models/tile';
 import { TileSet } from './models/tileSet';
+import { isWinningHandWithMelds } from './decomposer';
+import type { Meld } from './models/meld';
 
 export type WaitType = 'edge' | 'closed' | 'single';
+
+/**
+ * Counts how many distinct tiles complete the pre-draw 13-tile hand.
+ * Used to gate the wait fans (单钓将/边张/坎张) which by 国标 only apply
+ * when the wait is exactly 1 tile.
+ *
+ * `handCounts` is the 14-tile final hand (i.e. allCounts minus locked-meld tiles).
+ * `winningTile` is the tile actually drawn — we subtract it to recover the 13-tile hand.
+ */
+export function countWinningTiles(
+  handCounts: TileSet,
+  lockedMelds: readonly Meld[],
+  winningTile: Tile,
+): number {
+  const pre = handCounts.clone();
+  pre.remove(winningTile);
+  let count = 0;
+  for (let i = 0; i < 34; i++) {
+    if (pre.getByIndex(i) >= 4) continue;
+    const t = tileFromIndex(i);
+    pre.add(t);
+    if (isWinningHandWithMelds(pre, lockedMelds)) count++;
+    pre.remove(t);
+    if (count > 1) return count; // early exit — caller only cares about ==1 vs >1
+  }
+  return count;
+}
 
 /**
  * Determines wait types for the winning tile across ALL valid decompositions.

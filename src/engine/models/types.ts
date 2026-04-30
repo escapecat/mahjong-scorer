@@ -17,6 +17,7 @@ export interface FanRule {
 export interface FanContext {
   readonly allCounts: TileSet;
   readonly handCounts: TileSet;
+  readonly lockedMelds: readonly Meld[];
   readonly decomposition: HandDecomposition;
   readonly game: GameContext;
 }

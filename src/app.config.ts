@@ -1,5 +1,5 @@
 export default defineAppConfig({
-  pages: ['pages/index/index', 'pages/fantable/index'],
+  pages: ['pages/index/index', 'pages/fantable/index', 'pages/practice/index'],
   window: {
     backgroundTextStyle: 'light',
     navigationBarBackgroundColor: '#1a1a2e',

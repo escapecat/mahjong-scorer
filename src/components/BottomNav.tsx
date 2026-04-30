@@ -2,15 +2,22 @@ import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './BottomNav.module.css';
 
+type Tab = 'home' | 'fantable' | 'practice';
+
 interface Props {
-  active: 'home' | 'fantable';
+  active: Tab;
 }
 
+const TAB_URLS: Record<Tab, string> = {
+  home: '/pages/index/index',
+  fantable: '/pages/fantable/index',
+  practice: '/pages/practice/index',
+};
+
 export function BottomNav({ active }: Props) {
-  function go(target: 'home' | 'fantable') {
+  function go(target: Tab) {
     if (target === active) return;
-    const url = target === 'home' ? '/pages/index/index' : '/pages/fantable/index';
-    Taro.redirectTo({ url });
+    Taro.redirectTo({ url: TAB_URLS[target] });
   }
 
   return (
@@ -28,6 +35,13 @@ export function BottomNav({ active }: Props) {
       >
         <Text className={styles.icon}>📋</Text>
         <Text className={styles.label}>番表</Text>
+      </View>
+      <View
+        className={`${styles.tab} ${active === 'practice' ? styles.active : ''}`}
+        onClick={() => go('practice')}
+      >
+        <Text className={styles.icon}>📝</Text>
+        <Text className={styles.label}>练习</Text>
       </View>
     </View>
   );

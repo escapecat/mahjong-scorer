@@ -2,7 +2,7 @@ import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './BottomNav.module.css';
 
-type Tab = 'home' | 'fantable' | 'practice';
+type Tab = 'home' | 'fantable' | 'practice' | 'session';
 
 interface Props {
   active: Tab;
@@ -12,6 +12,7 @@ const TAB_URLS: Record<Tab, string> = {
   home: '/pages/index/index',
   fantable: '/pages/fantable/index',
   practice: '/pages/practice/index',
+  session: '/pages/session/index',
 };
 
 export function BottomNav({ active }: Props) {
@@ -42,6 +43,13 @@ export function BottomNav({ active }: Props) {
       >
         <Text className={styles.icon}>📝</Text>
         <Text className={styles.label}>练习</Text>
+      </View>
+      <View
+        className={`${styles.tab} ${active === 'session' ? styles.active : ''}`}
+        onClick={() => go('session')}
+      >
+        <Text className={styles.icon}>🎲</Text>
+        <Text className={styles.label}>对局</Text>
       </View>
     </View>
   );

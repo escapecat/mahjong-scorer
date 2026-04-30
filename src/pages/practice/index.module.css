@@ -244,28 +244,55 @@
 .fanCountChoice {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.82);
   border: 2px solid rgba(255, 255, 255, 0.6);
   border-radius: 10px;
 }
 .choiceLetter {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  color: #2563eb;
-  width: 22px;
-  height: 22px;
+  color: #94a3b8;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(37, 99, 235, 0.1);
+  background: #fff;
+  border: 2px solid #cbd5e1;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 .choiceValue {
   font-size: 18px;
   font-weight: 600;
   color: #1e293b;
+}
+.fanCountChoice.selected {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+}
+.fanCountChoice.selected .choiceLetter {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.fanCountChoice.selected .choiceValue {
+  color: #1e40af;
+  font-weight: 700;
+}
+.fanCountChoice.correctSelected .choiceLetter,
+.fanCountChoice.wrongSelected .choiceLetter {
+  color: #fff;
+}
+.fanCountChoice.correctSelected .choiceLetter {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+.fanCountChoice.wrongSelected .choiceLetter {
+  background: #ef4444;
+  border-color: #ef4444;
 }
 .candidateTiles {
   display: flex;

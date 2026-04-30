@@ -1,0 +1,77 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 24rpx;
+  padding: 12rpx 16rpx;
+  min-height: 80rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 12rpx 12rpx 32rpx rgba(148, 163, 184, 0.2), -12rpx -12rpx 32rpx rgba(255, 255, 255, 0.7);
+}
+.tiles {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+  align-items: center;
+  overflow: hidden;
+}
+.handTile {
+  background: none;
+  padding: 2rpx;
+  border-radius: 8rpx;
+  line-height: 0;
+}
+.tileImg {
+  height: 56rpx;
+  width: 42rpx;
+}
+.tileImgSm {
+  height: 56rpx;
+  width: 42rpx;
+}
+.sep {
+  color: #cbd5e1;
+  font-size: 36rpx;
+  margin: 0 4rpx;
+}
+.meld {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rpx;
+  background: rgba(241, 245, 249, 0.9);
+  border-radius: 12rpx;
+  padding: 4rpx 8rpx;
+  position: relative;
+  line-height: 0;
+}
+.meldTag {
+  position: absolute;
+  bottom: -4rpx;
+  right: -4rpx;
+  font-size: 16rpx;
+  background: #2563eb;
+  color: #fff;
+  padding: 0 6rpx;
+  border-radius: 8rpx;
+  line-height: 1.4;
+  font-weight: 700;
+}
+.placeholder {
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+.clearBtn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

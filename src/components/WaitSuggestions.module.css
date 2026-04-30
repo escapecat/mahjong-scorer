@@ -1,0 +1,127 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.15);
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+.label {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: 16rpx;
+  padding: 8rpx 16rpx;
+  flex-shrink: 0;
+}
+.expanded {
+  background: rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 3rpx rgba(37, 99, 235, 0.4);
+}
+.tileImg {
+  height: 56rpx;
+  width: 42rpx;
+}
+.fan {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #2563eb;
+}
+.detail {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
+  padding: 16rpx 20rpx;
+  border: 2rpx solid rgba(37, 99, 235, 0.15);
+  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.detailFan {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #2563eb;
+}
+.decomp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  align-items: center;
+  flex: 1;
+}
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rpx;
+  background: rgba(241, 245, 249, 0.9);
+  border-radius: 12rpx;
+  padding: 4rpx 6rpx;
+}
+.tileXs {
+  height: 44rpx;
+  width: 33rpx;
+}
+.winMarker {
+  display: inline-flex;
+  position: relative;
+  border-radius: 8rpx;
+  box-shadow: 0 0 0 3rpx #ef4444, 0 0 12rpx rgba(239, 68, 68, 0.3);
+}
+.winMarker::after {
+  content: "胡";
+  position: absolute;
+  top: -12rpx;
+  right: -12rpx;
+  font-size: 14rpx;
+  font-weight: 800;
+  color: #fff;
+  background: #ef4444;
+  padding: 0 6rpx;
+  border-radius: 6rpx;
+  line-height: 1.4;
+  z-index: 1;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+.chip {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e40af;
+  border-radius: 999rpx;
+  padding: 8rpx 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.addBtn {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(59, 130, 246, 0.9));
+  color: #fff;
+  padding: 8rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  box-shadow: 0 8rpx 20rpx rgba(37, 99, 235, 0.25);
+}

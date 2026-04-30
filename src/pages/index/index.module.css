@@ -1,0 +1,17 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 112rpx;
+  max-width: 1120rpx;
+  margin: 0 auto;
+  background: transparent;
+}
+.display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 4rpx 12rpx;
+  overflow-y: auto;
+}

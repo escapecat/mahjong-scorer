@@ -1,0 +1,80 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.decomp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.15);
+}
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rpx;
+  background: rgba(241, 245, 249, 0.9);
+  border-radius: 12rpx;
+  padding: 4rpx 6rpx;
+}
+.tileXs {
+  height: 44rpx;
+  width: 33rpx;
+}
+.winMarker {
+  display: inline-flex;
+  position: relative;
+  border-radius: 8rpx;
+  box-shadow: 0 0 0 3rpx #ef4444, 0 0 12rpx rgba(239, 68, 68, 0.3);
+}
+.winMarker::after {
+  content: "胡";
+  position: absolute;
+  top: -12rpx;
+  right: -12rpx;
+  font-size: 14rpx;
+  font-weight: 800;
+  color: #fff;
+  background: #ef4444;
+  padding: 0 6rpx;
+  border-radius: 6rpx;
+  line-height: 1.4;
+  z-index: 1;
+}
+.fanBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.15);
+}
+.fanChip {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e40af;
+  border-radius: 999rpx;
+  padding: 8rpx 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.expanded {
+  background: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 0 0 3rpx rgba(37, 99, 235, 0.4);
+}
+.reason {
+  padding: 12rpx 20rpx;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(37, 99, 235, 0.15);
+  box-shadow: 8rpx 8rpx 24rpx rgba(148, 163, 184, 0.15);
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.5;
+}

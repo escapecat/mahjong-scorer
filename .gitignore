@@ -10,6 +10,9 @@ node_modules/
 # weapp build (not committed — open dist-weapp/ in WeChat DevTools to preview)
 dist-weapp/
 
+# private data — historical sessions kept locally only
+data-import.json
+
 # misc
 .DS_Store
 .env.local

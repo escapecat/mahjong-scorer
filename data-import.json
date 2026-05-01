@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "exportedAt": 1777603906477,
+  "activeSessionId": null,
+  "sessions": [
+    {
+      "id": "imp_01",
+      "startTime": 1771070400000,
+      "endTime": 1771081200000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_01_total",
+        "timestamp": 1771074000000,
+        "type": "draw",
+        "manualDeltas": [80, -71, -147, 138],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_02",
+      "startTime": 1771675200000,
+      "endTime": 1771686000000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_02_total",
+        "timestamp": 1771678800000,
+        "type": "draw",
+        "manualDeltas": [171, -147, -110, 86],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_03",
+      "startTime": 1772280000000,
+      "endTime": 1772290800000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_03_total",
+        "timestamp": 1772283600000,
+        "type": "draw",
+        "manualDeltas": [129, -143, -112, 126],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_04",
+      "startTime": 1772884800000,
+      "endTime": 1772895600000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_04_total",
+        "timestamp": 1772888400000,
+        "type": "draw",
+        "manualDeltas": [152, -91, -37, -24],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_05",
+      "startTime": 1773489600000,
+      "endTime": 1773500400000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_05_total",
+        "timestamp": 1773493200000,
+        "type": "draw",
+        "manualDeltas": [-30, -96, 170, -44],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_06",
+      "startTime": 1774094400000,
+      "endTime": 1774105200000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_06_total",
+        "timestamp": 1774098000000,
+        "type": "draw",
+        "manualDeltas": [47, 56, 145, -248],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_07",
+      "startTime": 1774699200000,
+      "endTime": 1774710000000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_07_total",
+        "timestamp": 1774702800000,
+        "type": "draw",
+        "manualDeltas": [-97, -15, 69, 43],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_08",
+      "startTime": 1775304000000,
+      "endTime": 1775314800000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_08_total",
+        "timestamp": 1775307600000,
+        "type": "draw",
+        "manualDeltas": [218, 100, -312, -6],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_09",
+      "startTime": 1775908800000,
+      "endTime": 1775919600000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_09_total",
+        "timestamp": 1775912400000,
+        "type": "draw",
+        "manualDeltas": [50, 121, 62, -233],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_10",
+      "startTime": 1776513600000,
+      "endTime": 1776524400000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_10_total",
+        "timestamp": 1776517200000,
+        "type": "draw",
+        "manualDeltas": [-134, 72, -87, 149],
+        "notes": "历史数据导入,本局总分"
+      }]
+    },
+    {
+      "id": "imp_11",
+      "startTime": 1777118400000,
+      "endTime": 1777129200000,
+      "players": ["小方", "玮丹", "玉琪", "李明"],
+      "baseScore": 8,
+      "rounds": [{
+        "id": "imp_11_total",
+        "timestamp": 1777122000000,
+        "type": "draw",
+        "manualDeltas": [24, -72, -12, 60],
+        "notes": "历史数据导入,本局总分"
+      }]
+    }
+  ]
+}

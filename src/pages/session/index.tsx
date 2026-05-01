@@ -19,6 +19,7 @@ import {
 import { aggregateByPlayer, buildRunningTotals, type TimeRange } from './aggregation';
 import { TrendChart } from '../../components/TrendChart';
 import { SessionShareButton } from '../../components/SessionShareButton';
+import { AggregateShareButton } from '../../components/AggregateShareButton';
 import styles from './index.module.css';
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉', '🏅'];
@@ -454,16 +455,19 @@ export default function SessionPage() {
           <View className={styles.aggregateSection}>
             <View className={styles.aggregateHeader}>
               <Text className={styles.archiveTitle}>📊 玩家累计</Text>
-              <View className={styles.rangeRow}>
-                {(['today', 'week', 'month', 'all'] as const).map((r) => (
-                  <View
-                    key={r}
-                    className={`${styles.rangeChip} ${aggRange === r ? styles.rangeChipActive : ''}`}
-                    onClick={() => setAggRange(r)}
-                  >
-                    <Text>{ {today: '今天', week: '本周', month: '本月', all: '全部'}[r] }</Text>
-                  </View>
-                ))}
+              <View className={styles.aggregateHeaderRight}>
+                <View className={styles.rangeRow}>
+                  {(['today', 'week', 'month', 'all'] as const).map((r) => (
+                    <View
+                      key={r}
+                      className={`${styles.rangeChip} ${aggRange === r ? styles.rangeChipActive : ''}`}
+                      onClick={() => setAggRange(r)}
+                    >
+                      <Text>{ {today: '今天', week: '本周', month: '本月', all: '全部'}[r] }</Text>
+                    </View>
+                  ))}
+                </View>
+                <AggregateShareButton players={playerAgg} range={aggRange} />
               </View>
             </View>
             {playerAgg.map((p, i) => (

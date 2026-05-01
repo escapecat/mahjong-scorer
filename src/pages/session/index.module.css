@@ -411,6 +411,12 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+.aggregateHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .rangeRow {
   display: flex;
   gap: 3px;

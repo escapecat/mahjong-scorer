@@ -239,7 +239,18 @@ export default function SessionPage() {
 
   const handleImport = useCallback((text: string) => {
     try {
-      const parsed = JSON.parse(text.trim());
+      // weapp / WeChat clipboard sometimes substitutes ASCII quotes with
+      // Chinese smart quotes, drops the BOM in the wrong place, or wraps the
+      // JSON in extra whitespace. Sanitize before parsing.
+      let cleaned = text.trim();
+      if (cleaned.charCodeAt(0) === 0xFEFF) cleaned = cleaned.slice(1); // BOM
+      cleaned = cleaned
+        .replace(/[‘’]/g, "'")    // smart single quotes → '
+        .replace(/[“”]/g, '"')    // smart double quotes → "
+        .replace(/、/g, ',')           // 、 → ,
+        .replace(/，/g, ',')           // , → ,
+        .replace(/：/g, ':');          // : → :
+      const parsed = JSON.parse(cleaned);
       if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.sessions)) {
         Taro.showToast({ title: '不是有效的备份 JSON', icon: 'none', duration: 1800 });
         return;
@@ -272,8 +283,23 @@ export default function SessionPage() {
           }
         },
       });
-    } catch (e) {
-      Taro.showToast({ title: 'JSON 解析失败,请检查内容', icon: 'none', duration: 2000 });
+    } catch (e: any) {
+      // Show position of the parse error if available
+      const msg = String(e?.message ?? e);
+      const m = msg.match(/position\s+(\d+)/i);
+      let detail = `JSON 解析失败 (${text.length} 字符)`;
+      if (m) {
+        const pos = parseInt(m[1], 10);
+        const around = text.slice(Math.max(0, pos - 15), pos + 15);
+        detail = `解析失败,位置 ${pos} 附近: ${around}`;
+      }
+      console.warn('Import parse error:', msg, 'text length:', text.length);
+      Taro.showModal({
+        title: '导入失败',
+        content: detail.length > 200 ? detail.slice(0, 200) + '…' : detail,
+        showCancel: false,
+        confirmText: '我知道了',
+      });
     }
   }, [store]);
 

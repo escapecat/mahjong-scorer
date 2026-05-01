@@ -20,6 +20,7 @@ import { aggregateByPlayer, buildRunningTotals, type TimeRange } from './aggrega
 import { TrendChart } from '../../components/TrendChart';
 import { SessionShareButton } from '../../components/SessionShareButton';
 import { AggregateShareButton } from '../../components/AggregateShareButton';
+import { ImportJsonModal } from '../../components/ImportJsonModal';
 import styles from './index.module.css';
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉', '🏅'];
@@ -54,6 +55,7 @@ export default function SessionPage() {
   const [editingRound, setEditingRound] = useState<Round | null>(null);
   const [aggRange, setAggRange] = useState<TimeRange>('week');
   const [showAllArchived, setShowAllArchived] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   useShareAppMessage(() => ({
     title: '国标麻将对局计分 · 自动算分,生成战报',
@@ -233,17 +235,9 @@ export default function SessionPage() {
     });
   }, [store]);
 
-  const restoreAll = useCallback(async () => {
-    let text: string | null = null;
-    if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
-      text = window.prompt('粘贴备份 JSON 来恢复全部数据(会覆盖当前所有局):');
-    } else {
-      try {
-        const r = await Taro.getClipboardData();
-        text = r.data || null;
-      } catch (e) { /* ignore */ }
-    }
-    if (!text) return;
+  const restoreAll = useCallback(() => setShowImport(true), []);
+
+  const handleImport = useCallback((text: string) => {
     try {
       const parsed = JSON.parse(text.trim());
       if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.sessions)) {
@@ -274,11 +268,12 @@ export default function SessionPage() {
               sessions: validSessions,
             });
             Taro.showToast({ title: '已恢复', icon: 'success', duration: 1200 });
+            setShowImport(false);
           }
         },
       });
     } catch (e) {
-      Taro.showToast({ title: 'JSON 解析失败', icon: 'none', duration: 1800 });
+      Taro.showToast({ title: 'JSON 解析失败,请检查内容', icon: 'none', duration: 2000 });
     }
   }, [store]);
 
@@ -537,6 +532,13 @@ export default function SessionPage() {
           initial={editingRound ?? undefined}
           onSave={editingRound ? updateRound : addRound}
           onCancel={() => { setShowEntry(false); setEditingRound(null); }}
+        />
+      )}
+
+      {showImport && (
+        <ImportJsonModal
+          onConfirm={handleImport}
+          onCancel={() => setShowImport(false)}
         />
       )}
 
